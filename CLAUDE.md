@@ -32,20 +32,20 @@ A fully self-contained single-file Tic Tac Toe game. Open directly in any browse
 - Win detection: checks all 8 winning combinations from the `WINS` constant on every move
 
 **Known quirk:** `makeSVG` for X renders 4 lines (the first two are duplicates from a `.flat()` leftover); visually correct but redundant.
-
 ## Project Status
-_Auto-updated: 2026-03-07 16:42:00_
+_Auto-updated: 2026-03-07 16:42:56_
 
 ### Recent commits
+cc14e3a Auto-commit: 2026-03-07 16:42:00
 f5f1929 Update auto-commit script to use gh token for push
 9040713 Initial commit: Tic Tac Toe game with Solidigm brand design
 
 ### Files changed since last commit
- M auto-commit.sh
-?? CLAUDE.md
+(none)
 
 ### Files in repo
 - .gitignore
+- CLAUDE.md
 - auto-commit.sh
 - tictactoe.html
 
