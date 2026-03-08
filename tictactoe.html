@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic Tac Toe — Solidigm</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+
+    /* Solidigm brand palette */
+    :root {
+      --bg:        #370647;   /* Clairvoyant – deep background */
+      --surface:   #4a0a60;   /* slightly lighter surface */
+      --card:      #1e0230;   /* darkest card bg */
+      --primary:   #4F00B4;   /* Solidigm Purple */
+      --accent:    #E0A8FF;   /* Mauve – highlights */
+      --white:     #ffffff;
+      --muted:     #c0a0d8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', 'Segoe UI', sans-serif;
+      background: var(--bg);
+      background-image:
+        radial-gradient(ellipse 80% 60% at 50% -10%, rgba(79,0,180,0.45) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 40% at 80% 110%, rgba(224,168,255,0.12) 0%, transparent 60%);
+      color: var(--white);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    /* ── Logo / Brand header ─────────────────────── */
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+    }
+
+    .brand-name {
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--accent);
+      opacity: 0.85;
+    }
+
+    h1 {
+      font-size: 2.6rem;
+      font-weight: 900;
+      letter-spacing: -1px;
+      margin-bottom: 0.3rem;
+      background: linear-gradient(135deg, var(--white) 30%, var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ── Score bar ───────────────────────────────── */
+    #score {
+      display: flex;
+      gap: 1rem;
+      margin: 1.4rem 0 1rem;
+    }
+
+    .score-box {
+      text-align: center;
+      background: var(--card);
+      border: 1px solid rgba(224,168,255,0.15);
+      padding: 0.55rem 1.4rem;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+      min-width: 80px;
+    }
+
+    .score-box span {
+      display: block;
+      font-size: 1.8rem;
+      font-weight: 900;
+      margin-top: 2px;
+    }
+
+    .score-box.x-score span  { color: var(--accent); }
+    .score-box.o-score span  { color: #bf80ff; }
+    .score-box.draw-score span { color: var(--muted); }
+
+    /* ── Status ──────────────────────────────────── */
+    #status {
+      font-size: 1.05rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      color: var(--accent);
+      min-height: 1.6rem;
+      margin-bottom: 1.4rem;
+      transition: color 0.3s;
+    }
+
+    /* ── Board ───────────────────────────────────── */
+    #board-wrap {
+      position: relative;
+      padding: 6px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+    }
+
+    #board {
+      display: grid;
+      grid-template-columns: repeat(3, 110px);
+      grid-template-rows: repeat(3, 110px);
+      gap: 6px;
+      background: var(--bg);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .cell {
+      background: var(--card);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.18s, transform 0.12s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cell::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(224,168,255,0.08), transparent 70%);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .cell:hover:not(.taken)::after { opacity: 1; }
+
+    .cell:hover:not(.taken) {
+      background: #2a0440;
+      transform: scale(1.04);
+    }
+
+    /* SVG symbols drawn by JS */
+    .cell svg { width: 62px; height: 62px; }
+
+    .cell.win {
+      background: rgba(79,0,180,0.45);
+      box-shadow: inset 0 0 0 2px rgba(224,168,255,0.45);
+      animation: pulse-win 1s ease-in-out infinite alternate;
+    }
+
+    @keyframes pulse-win {
+      from { box-shadow: inset 0 0 0 2px rgba(224,168,255,0.3); }
+      to   { box-shadow: inset 0 0 0 2px rgba(224,168,255,0.9), 0 0 18px rgba(224,168,255,0.25); }
+    }
+
+    @keyframes pop-in {
+      0%   { transform: scale(0.3); opacity: 0; }
+      70%  { transform: scale(1.15); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .cell svg { animation: pop-in 0.22s cubic-bezier(.34,1.56,.64,1) forwards; }
+
+    /* ── Reset button ────────────────────────────── */
+    #reset {
+      margin-top: 1.8rem;
+      padding: 0.7rem 2.2rem;
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, var(--primary), #7a2be2);
+      color: var(--white);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: filter 0.15s, transform 0.12s, box-shadow 0.15s;
+      box-shadow: 0 4px 20px rgba(79,0,180,0.4);
+    }
+
+    #reset:hover {
+      filter: brightness(1.15);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 26px rgba(79,0,180,0.55);
+    }
+
+    #reset:active { transform: translateY(0); }
+  </style>
+</head>
+<body>
+
+  <!-- Solidigm brand header -->
+  <div class="brand">
+    <!-- Minimal geometric logo mark using inline SVG -->
+    <svg class="brand-logo" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="36" height="36" rx="8" fill="#4F00B4"/>
+      <polygon points="18,6 30,12 30,24 18,30 6,24 6,12" fill="none" stroke="#E0A8FF" stroke-width="2"/>
+      <circle cx="18" cy="18" r="4" fill="#E0A8FF"/>
+    </svg>
+    <span class="brand-name">Solidigm</span>
+  </div>
+
+  <h1>Tic Tac Toe</h1>
+
+  <div id="score">
+    <div class="score-box x-score">Player X<span id="score-x">0</span></div>
+    <div class="score-box draw-score">Draws<span id="score-d">0</span></div>
+    <div class="score-box o-score">Player O<span id="score-o">0</span></div>
+  </div>
+
+  <div id="status">Player X's turn</div>
+
+  <div id="board-wrap">
+    <div id="board">
+      <div class="cell" data-i="0"></div>
+      <div class="cell" data-i="1"></div>
+      <div class="cell" data-i="2"></div>
+      <div class="cell" data-i="3"></div>
+      <div class="cell" data-i="4"></div>
+      <div class="cell" data-i="5"></div>
+      <div class="cell" data-i="6"></div>
+      <div class="cell" data-i="7"></div>
+      <div class="cell" data-i="8"></div>
+    </div>
+  </div>
+
+  <button id="reset">New Game</button>
+
+  <script>
+    const WINS = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    let board, current, gameOver, scores = {X:0, O:0, D:0};
+
+    /* Draw X or O as crisp SVG */
+    function makeSVG(player) {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '0 0 62 62');
+      if (player === 'X') {
+        const color = '#E0A8FF';
+        [[[14,14,48,48],[48,14,14,48]]].flat().forEach(([x1,y1,x2,y2]) => {
+          const l = document.createElementNS('http://www.w3.org/2000/svg','line');
+          Object.entries({x1,y1,x2,y2,stroke:color,'stroke-width':'5','stroke-linecap':'round'})
+            .forEach(([k,v]) => l.setAttribute(k,v));
+          svg.appendChild(l);
+        });
+        // two lines of the X
+        const coords = [[14,14,48,48],[48,14,14,48]];
+        coords.forEach(([x1,y1,x2,y2]) => {
+          const l = document.createElementNS('http://www.w3.org/2000/svg','line');
+          l.setAttribute('x1',x1); l.setAttribute('y1',y1);
+          l.setAttribute('x2',x2); l.setAttribute('y2',y2);
+          l.setAttribute('stroke', color);
+          l.setAttribute('stroke-width', '5');
+          l.setAttribute('stroke-linecap', 'round');
+          svg.appendChild(l);
+        });
+      } else {
+        const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+        circle.setAttribute('cx','31'); circle.setAttribute('cy','31');
+        circle.setAttribute('r','18');
+        circle.setAttribute('stroke','#bf80ff');
+        circle.setAttribute('stroke-width','5');
+        circle.setAttribute('fill','none');
+        svg.appendChild(circle);
+      }
+      return svg;
+    }
+
+    function init() {
+      board = Array(9).fill(null);
+      current = 'X';
+      gameOver = false;
+      document.querySelectorAll('.cell').forEach(c => {
+        c.innerHTML = '';
+        c.className = 'cell';
+      });
+      document.getElementById('status').textContent = "Player X's turn";
+      document.getElementById('status').style.color = 'var(--accent)';
+    }
+
+    function checkWinner() {
+      for (const [a,b,c] of WINS) {
+        if (board[a] && board[a] === board[b] && board[a] === board[c])
+          return { winner: board[a], line: [a,b,c] };
+      }
+      if (board.every(Boolean)) return { winner: null, line: [] };
+      return null;
+    }
+
+    function updateScores() {
+      document.getElementById('score-x').textContent = scores.X;
+      document.getElementById('score-o').textContent = scores.O;
+      document.getElementById('score-d').textContent = scores.D;
+    }
+
+    document.querySelectorAll('.cell').forEach(cell => {
+      cell.addEventListener('click', () => {
+        const i = +cell.dataset.i;
+        if (gameOver || board[i]) return;
+
+        board[i] = current;
+        cell.appendChild(makeSVG(current));
+        cell.classList.add('taken');
+
+        const result = checkWinner();
+        if (result) {
+          gameOver = true;
+          const status = document.getElementById('status');
+          if (result.winner) {
+            result.line.forEach(j =>
+              document.querySelector(`[data-i="${j}"]`).classList.add('win')
+            );
+            status.textContent = `Player ${result.winner} wins!`;
+            status.style.color = '#E0A8FF';
+            scores[result.winner]++;
+          } else {
+            status.textContent = "It's a draw!";
+            status.style.color = 'var(--muted)';
+            scores.D++;
+          }
+          updateScores();
+        } else {
+          current = current === 'X' ? 'O' : 'X';
+          document.getElementById('status').textContent = `Player ${current}'s turn`;
+        }
+      });
+    });
+
+    document.getElementById('reset').addEventListener('click', init);
+    init();
+  </script>
+</body>
+</html>
