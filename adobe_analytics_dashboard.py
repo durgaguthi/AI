@@ -23,14 +23,14 @@ TABLE_SCHEMA = """
 Table: {table}
 
 Key columns (Adobe Analytics Data Feed):
-  - hit_time_gm        INT64     Unix timestamp of the hit
+  - int64_field_11        INT64     Unix timestamp of the hit
   - timestamp_field_5           STRING    Human-readable date (YYYY-MM-DD HH:MM:SS)
-  - visit_num           INT64     Visit number for the visitor
-  - visid_high          STRING    Visitor ID (high)
-  - visid_low           STRING    Visitor ID (low)
-  - page_url            STRING    Full page URL
-  - pagename            STRING    Page name
-  - referrer            STRING    Referring URL
+  - int64_field_389           INT64     Visit number for the visitor
+  - int64_field_379          STRING    Visitor ID (high)
+  - int64_field_380           STRING    Visitor ID (low)
+  - string_field_8           STRING    Full page URL
+  - string_field_9           STRING    Page name
+  - string_field_10            STRING    Referring URL
   - event_list          STRING    Comma-separated event IDs fired
   - evar1               STRING    eVar 1 (custom)
   - evar2               STRING    eVar 2 (custom)
