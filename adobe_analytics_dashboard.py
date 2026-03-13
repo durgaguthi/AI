@@ -3,6 +3,8 @@ Adobe Analytics BigLake Dashboard powered by Claude AI
 Ask natural language questions — Claude generates SQL, queries BigLake, and visualizes results.
 """
 
+from __future__ import annotations
+
 import json
 import os
 import anthropic
