@@ -50,12 +50,12 @@ Key columns (Adobe Analytics Data Feed):
 #  - post_event_list     STRING    Post-processed event list
 
 Important query rules:
-  1. Always filter: WHERE exclude_hit = 0
-  2. Use TIMESTAMP_SECONDS(hit_time_gmt) to convert timestamps
-  3. Count unique visitors with COUNT(DISTINCT CONCAT(visid_high, visid_low))
-  4. Count visits with COUNT(DISTINCT CONCAT(visid_high, visid_low, CAST(visit_num AS STRING)))
+#  1. Always filter: WHERE exclude_hit = 0
+  2. Use TIMESTAMP_SECONDS(first_hit_time_gmt) to convert timestamps
+  3. Count unique visitors with COUNT(DISTINCT CONCAT(int64_field_379, int64_field_380))
+  4. Count visits with COUNT(DISTINCT CONCAT(int64_field_379, int64_field_380, CAST(int64_field_389 AS STRING)))
   5. For page views: COUNT(*) where exclude_hit = 0
-  6. Partition/filter by date using: DATE(TIMESTAMP_SECONDS(hit_time_gmt))
+  6. Partition/filter by date using: DATE(TIMESTAMP_SECONDS(first_hit_time_gmt))
 """.format(table=FULL_TABLE_ID)
 
 SYSTEM_PROMPT = f"""You are an expert Adobe Analytics and BigQuery SQL analyst.
