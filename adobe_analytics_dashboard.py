@@ -23,8 +23,8 @@ TABLE_SCHEMA = """
 Table: {table}
 
 Key columns (Adobe Analytics Data Feed):
-  - hit_time_gmt        INT64     Unix timestamp of the hit
-  - date_time           STRING    Human-readable date (YYYY-MM-DD HH:MM:SS)
+  - hit_time_gm        INT64     Unix timestamp of the hit
+  - timestamp_field_5           STRING    Human-readable date (YYYY-MM-DD HH:MM:SS)
   - visit_num           INT64     Visit number for the visitor
   - visid_high          STRING    Visitor ID (high)
   - visid_low           STRING    Visitor ID (low)
