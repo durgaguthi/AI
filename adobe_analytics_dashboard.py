@@ -31,23 +31,23 @@ Key columns (Adobe Analytics Data Feed):
   - string_field_8           STRING    Full page URL
   - string_field_9           STRING    Page name
   - string_field_10            STRING    Referring URL
-  - event_list          STRING    Comma-separated event IDs fired
+  - double_field_283          STRING    Comma-separated event IDs fired
   - evar1               STRING    eVar 1 (custom)
   - evar2               STRING    eVar 2 (custom)
   - prop1               STRING    prop1 (custom)
-  - geo_country         STRING    Country from IP geolookup
-  - geo_region          STRING    Region from IP geolookup
-  - geo_city            STRING    City from IP geolookup
-  - browser             INT64     Browser ID (join browser_type.tsv)
-  - os                  INT64     OS ID (join operating_systems.tsv)
-  - mobile_id           INT64     Mobile device ID (0 = desktop)
-  - exclude_hit         INT64     Filter: only use rows WHERE exclude_hit = 0
-  - duplicate_purchase  INT64     Filter: only use rows WHERE duplicate_purchase = 0
-  - post_purchaseid     STRING    Purchase/order ID (non-null = purchase)
-  - post_visid_high     STRING    Post-processed visitor ID (high)
-  - post_visid_low      STRING    Post-processed visitor ID (low)
-  - post_evar1          STRING    Post-processed eVar 1
-  - post_event_list     STRING    Post-processed event list
+  - string_field_13         STRING    Country from IP geolookup
+  - string_field_15          STRING    Region from IP geolookup
+  - string_field_12            STRING    City from IP geolookup
+  - int64_field_1             INT64     Browser ID (join browser_type.tsv)
+  - int64_field_25                  INT64     OS ID (join operating_systems.tsv)
+  - int64_field_23           INT64     Mobile device ID (0 = desktop)
+#  - exclude_hit         INT64     Filter: only use rows WHERE exclude_hit = 0
+#  - duplicate_purchase  INT64     Filter: only use rows WHERE duplicate_purchase = 0
+#  - post_purchaseid     STRING    Purchase/order ID (non-null = purchase)
+#  - post_visid_high     STRING    Post-processed visitor ID (high)
+#  - post_visid_low      STRING    Post-processed visitor ID (low)
+#  - post_evar1          STRING    Post-processed eVar 1
+#  - post_event_list     STRING    Post-processed event list
 
 Important query rules:
   1. Always filter: WHERE exclude_hit = 0
