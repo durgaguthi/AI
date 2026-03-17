@@ -20,44 +20,47 @@ BIGQUERY_TABLE   = os.environ.get("BIGQUERY_TABLE",   "adobe_hits")
 
 FULL_TABLE_ID = f"`{BIGQUERY_PROJECT}.{BIGQUERY_DATASET}.{BIGQUERY_TABLE}`"
 
-# Adobe Analytics columns available in BigLake (edit to match your feed schema)
+# dotcom_web_data schema (mapped from sample row inspection)
 TABLE_SCHEMA = """
 Table: {table}
 
-Key columns (Adobe Analytics Data Feed):
-  - int64_field_11        INT64     Unix timestamp of the hit
-  - timestamp_field_5           STRING    Human-readable date (YYYY-MM-DD HH:MM:SS)
-  - int64_field_389           INT64     Visit number for the visitor
-  - int64_field_379          STRING    Visitor ID (high)
-  - int64_field_380           STRING    Visitor ID (low)
-  - string_field_8           STRING    Full page URL
-  - string_field_9           STRING    Page name
-  - string_field_10            STRING    Referring URL
-  - double_field_283          STRING    Comma-separated event IDs fired
-  - evar1               STRING    eVar 1 (custom)
-  - evar2               STRING    eVar 2 (custom)
-  - prop1               STRING    prop1 (custom)
-  - string_field_13         STRING    Country from IP geolookup
-  - string_field_15          STRING    Region from IP geolookup
-  - string_field_12            STRING    City from IP geolookup
-  - int64_field_1             INT64     Browser ID (join browser_type.tsv)
-  - int64_field_25                  INT64     OS ID (join operating_systems.tsv)
-  - int64_field_23           INT64     Mobile device ID (0 = desktop)
-#  - exclude_hit         INT64     Filter: only use rows WHERE exclude_hit = 0
-#  - duplicate_purchase  INT64     Filter: only use rows WHERE duplicate_purchase = 0
-#  - post_purchaseid     STRING    Purchase/order ID (non-null = purchase)
-#  - post_visid_high     STRING    Post-processed visitor ID (high)
-#  - post_visid_low      STRING    Post-processed visitor ID (low)
-#  - post_evar1          STRING    Post-processed eVar 1
-#  - post_event_list     STRING    Post-processed event list
+Key columns (dotcom_web_data — Solidigm Adobe Analytics):
+  - string_field_42     STRING    Hit datetime (e.g. '2026-01-05 00:48:33')
+  - string_field_47     STRING    Page name / title (e.g. 'solidigm d5-p5316 product brief')
+  - string_field_48     STRING    Page URL (full URL of the page visited)
+  - string_field_49     STRING    Referrer URL (where the visitor came from)
+  - string_field_50     STRING    Referrer domain (e.g. 'google.com')
+  - string_field_43     STRING    Referrer domain alternate
+  - string_field_53     STRING    City (e.g. 'beijing')
+  - string_field_54     STRING    Country code (e.g. 'chn', 'usa')
+  - string_field_56     STRING    Region/state code
+  - int64_field_51      INTEGER   Visit number
+  - int64_field_52      INTEGER   Visitor ID high
+  - int64_field_60      INTEGER   Page view count indicator (1 = page view)
+  - int64_field_61      INTEGER   Hit timestamp (Unix epoch seconds)
+  - int64_field_70      INTEGER   First hit timestamp (Unix epoch seconds)
+  - int64_field_67      INTEGER   Visit page number
+  - string_field_149    STRING    User agent (browser/OS string)
+  - string_field_107    STRING    Site section / eVar
+  - string_field_109    STRING    Site entry page URL
+  - string_field_45     STRING    Event list (comma-separated event IDs)
+  - int64_field_112     INTEGER   Browser window height (px)
+  - int64_field_113     INTEGER   Browser window width (px)
+  - string_field_161    STRING    Post page name
+  - string_field_162    STRING    Post page URL
+  - string_field_126    STRING    Post site section
+  - string_field_139    STRING    Post referrer URL
+  - string_field_140    STRING    Post referrer domain
 
 Important query rules:
-#  1. Always filter: WHERE exclude_hit = 0
-  2. Use TIMESTAMP_SECONDS(first_hit_time_gmt) to convert timestamps
-  3. Count unique visitors with COUNT(DISTINCT CONCAT(int64_field_379, int64_field_380))
-  4. Count visits with COUNT(DISTINCT CONCAT(int64_field_379, int64_field_380, CAST(int64_field_389 AS STRING)))
-  5. For page views: COUNT(*) where exclude_hit = 0
-  6. Partition/filter by date using: DATE(TIMESTAMP_SECONDS(first_hit_time_gmt))
+  1. Use TIMESTAMP_SECONDS(int64_field_61) to convert hit timestamps to readable dates
+  2. Count unique visitors with COUNT(DISTINCT int64_field_52)
+  3. Count page views with COUNT(*) or SUM(int64_field_60)
+  4. Filter by date: DATE(TIMESTAMP_SECONDS(int64_field_61)) = '2026-01-05'
+  5. For date ranges: DATE(TIMESTAMP_SECONDS(int64_field_61)) BETWEEN '2026-01-01' AND '2026-01-31'
+  6. Page name is string_field_47, Page URL is string_field_48
+  7. Country is string_field_54, City is string_field_53
+  8. Referrer domain is string_field_50
 """.format(table=FULL_TABLE_ID)
 
 SYSTEM_PROMPT = f"""You are an expert Adobe Analytics and BigQuery SQL analyst.
