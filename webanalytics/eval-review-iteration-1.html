@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eval Review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #faf9f5;
+      --surface: #ffffff;
+      --border: #e8e6dc;
+      --text: #141413;
+      --text-muted: #b0aea5;
+      --accent: #d97757;
+      --accent-hover: #c4613f;
+      --green: #788c5d;
+      --green-bg: #eef2e8;
+      --red: #c44;
+      --red-bg: #fceaea;
+      --header-bg: #141413;
+      --header-text: #faf9f5;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .header .instructions {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-top: 0.25rem;
+    }
+    .header .progress {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      text-align: right;
+    }
+
+    /* ---- Main content ---- */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ---- Sections ---- */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      flex-shrink: 0;
+    }
+    .section-header {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .section-body {
+      padding: 1rem;
+    }
+
+    /* ---- Config badge ---- */
+    .config-badge {
+      display: inline-block;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-left: 0.75rem;
+      vertical-align: middle;
+    }
+    .config-badge.config-primary {
+      background: rgba(33, 150, 243, 0.12);
+      color: #1976d2;
+    }
+    .config-badge.config-baseline {
+      background: rgba(255, 193, 7, 0.15);
+      color: #f57f17;
+    }
+
+    /* ---- Prompt ---- */
+    .prompt-text {
+      white-space: pre-wrap;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    /* ---- Outputs ---- */
+    .output-file {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .output-file + .output-file {
+      margin-top: 1rem;
+    }
+    .output-file-header {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .output-file-header .dl-btn {
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-decoration: none;
+      cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+    .output-file-header .dl-btn:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+    .output-file-content {
+      padding: 0.75rem;
+      overflow-x: auto;
+    }
+    .output-file-content pre {
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+    .output-file-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .output-file-content iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+    }
+    .output-file-content table {
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      width: 100%;
+    }
+    .output-file-content table td,
+    .output-file-content table th {
+      border: 1px solid var(--border);
+      padding: 0.375rem 0.5rem;
+      text-align: left;
+    }
+    .output-file-content table th {
+      background: var(--bg);
+      font-weight: 600;
+    }
+    .output-file-content .download-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    .output-file-content .download-link:hover {
+      background: var(--border);
+    }
+    .empty-state {
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* ---- Feedback ---- */
+    .prev-feedback {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.625rem 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .prev-feedback-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+      color: var(--text-muted);
+    }
+    .feedback-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: var(--text);
+    }
+    .feedback-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .feedback-status {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      min-height: 1.1em;
+    }
+
+    /* ---- Grades (collapsible) ---- */
+    .grades-toggle {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .grades-toggle:hover {
+      color: var(--accent);
+    }
+    .grades-toggle .arrow {
+      margin-right: 0.5rem;
+      transition: transform 0.15s;
+      font-size: 0.75rem;
+    }
+    .grades-toggle .arrow.open {
+      transform: rotate(90deg);
+    }
+    .grades-content {
+      display: none;
+      margin-top: 0.75rem;
+    }
+    .grades-content.open {
+      display: block;
+    }
+    .grades-summary {
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .grade-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .grade-pass { background: var(--green-bg); color: var(--green); }
+    .grade-fail { background: var(--red-bg); color: var(--red); }
+    .assertion-list {
+      list-style: none;
+    }
+    .assertion-item {
+      padding: 0.625rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8125rem;
+    }
+    .assertion-item:last-child { border-bottom: none; }
+    .assertion-status {
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    .assertion-status.pass { color: var(--green); }
+    .assertion-status.fail { color: var(--red); }
+    .assertion-evidence {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      padding-left: 1.5rem;
+    }
+
+    /* ---- View tabs ---- */
+    .view-tabs {
+      display: flex;
+      gap: 0;
+      padding: 0 2rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .view-tab {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .view-panel { display: none; }
+    .view-panel.active { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+    /* ---- Benchmark view ---- */
+    .benchmark-view {
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .benchmark-table {
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+    .benchmark-table th, .benchmark-table td {
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+    .benchmark-table th {
+      font-family: 'Poppins', sans-serif;
+      background: var(--header-bg);
+      color: var(--header-text);
+      font-weight: 500;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .benchmark-table tr:hover { background: var(--bg); }
+    .benchmark-table tr.benchmark-row-with { background: rgba(33, 150, 243, 0.06); }
+    .benchmark-table tr.benchmark-row-without { background: rgba(255, 193, 7, 0.06); }
+    .benchmark-table tr.benchmark-row-with:hover { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-without:hover { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-table tr.benchmark-row-avg { font-weight: 600; border-top: 2px solid var(--border); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-with { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-without { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-delta-positive { color: var(--green); font-weight: 600; }
+    .benchmark-delta-negative { color: var(--red); font-weight: 600; }
+    .benchmark-notes {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .benchmark-notes h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+    .benchmark-notes ul {
+      list-style: disc;
+      padding-left: 1.25rem;
+    }
+    .benchmark-notes li {
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      margin-bottom: 0.375rem;
+    }
+    .benchmark-empty {
+      color: var(--text-muted);
+      font-style: italic;
+      text-align: center;
+      padding: 3rem;
+    }
+
+    /* ---- Navigation ---- */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .done-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .done-btn:hover {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .done-btn.ready {
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+    .done-btn.ready:hover {
+      background: var(--accent-hover);
+    }
+    /* ---- Done overlay ---- */
+    .done-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .done-overlay.visible {
+      display: flex;
+    }
+    .done-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 2rem 3rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+    }
+    .done-card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .done-card p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    .done-card .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    .done-card button {
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .done-card button:hover {
+      background: var(--bg);
+    }
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 200;
+    }
+    .toast.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" style="height:100vh; display:flex; flex-direction:column;">
+    <div class="header">
+      <div>
+        <h1>Eval Review: <span id="skill-name"></span></h1>
+        <div class="instructions">Review each output and leave feedback below. Navigate with arrow keys or buttons. When done, copy feedback and paste into Claude Code.</div>
+      </div>
+      <div class="progress" id="progress"></div>
+    </div>
+
+    <!-- View tabs (only shown when benchmark data exists) -->
+    <div class="view-tabs" id="view-tabs" style="display:none;">
+      <button class="view-tab active" onclick="switchView('outputs')">Outputs</button>
+      <button class="view-tab" onclick="switchView('benchmark')">Benchmark</button>
+    </div>
+
+    <!-- Outputs panel (qualitative review) -->
+    <div class="view-panel active" id="panel-outputs">
+    <div class="main">
+      <!-- Prompt -->
+      <div class="section">
+        <div class="section-header">Prompt <span class="config-badge" id="config-badge" style="display:none;"></span></div>
+        <div class="section-body">
+          <div class="prompt-text" id="prompt-text"></div>
+        </div>
+      </div>
+
+      <!-- Outputs -->
+      <div class="section">
+        <div class="section-header">Output</div>
+        <div class="section-body" id="outputs-body">
+          <div class="empty-state">No output files found</div>
+        </div>
+      </div>
+
+      <!-- Previous Output (collapsible) -->
+      <div class="section" id="prev-outputs-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="togglePrevOutputs()">
+            <span class="arrow" id="prev-outputs-arrow">&#9654;</span>
+            Previous Output
+          </div>
+        </div>
+        <div class="grades-content" id="prev-outputs-content"></div>
+      </div>
+
+      <!-- Grades (collapsible) -->
+      <div class="section" id="grades-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="toggleGrades()">
+            <span class="arrow" id="grades-arrow">&#9654;</span>
+            Formal Grades
+          </div>
+        </div>
+        <div class="grades-content" id="grades-content"></div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="section">
+        <div class="section-header">Your Feedback</div>
+        <div class="section-body">
+          <textarea
+            class="feedback-textarea"
+            id="feedback"
+            placeholder="What do you think of this output? Any issues, suggestions, or things that look great?"
+          ></textarea>
+          <div class="feedback-status" id="feedback-status"></div>
+          <div class="prev-feedback" id="prev-feedback" style="display:none;">
+            <div class="prev-feedback-label">Previous feedback</div>
+            <div id="prev-feedback-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav" id="outputs-nav">
+      <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">&#8592; Previous</button>
+      <button class="done-btn" id="done-btn" onclick="showDoneDialog()">Submit All Reviews</button>
+      <button class="nav-btn" id="next-btn" onclick="navigate(1)">Next &#8594;</button>
+    </div>
+    </div><!-- end panel-outputs -->
+
+    <!-- Benchmark panel (quantitative stats) -->
+    <div class="view-panel" id="panel-benchmark">
+      <div class="benchmark-view" id="benchmark-content">
+        <div class="benchmark-empty">No benchmark data available. Run a benchmark to see quantitative results here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Done overlay -->
+  <div class="done-overlay" id="done-overlay">
+    <div class="done-card">
+      <h2>Review Complete</h2>
+      <p>Your feedback has been saved. Go back to your Claude Code session and tell Claude you're done reviewing.</p>
+      <div class="btn-row">
+        <button onclick="closeDoneDialog()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ---- Embedded data (injected by generate_review.py) ----
+    const EMBEDDED_DATA = {"skill_name": "web-analytics-dashboard", "runs": [{"id": "eval-1-full-dashboard-with_skill", "prompt": "I have this Excel file with our website analytics data (dotcom_analytics.xlsx). Can you build me an interactive dashboard showing traffic trends, top pages, where our visitors come from geographically, and referrer breakdown?", "eval_id": 1, "outputs": [{"name": "web-analytics-dashboard.html", "type": "text", "content": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Web Analytics Dashboard</title>\n    <script src=\"https://cdn.plot.ly/plotly-latest.min.js\"></script>\n    <style>\n        * {\n            margin: 0;\n            padding: 0;\n            box-sizing: border-box;\n        }\n        \n        body {\n            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;\n            background: #f8fafc;\n            color: #1e293b;\n        }\n        \n        .dashboard {\n            max-width: 1400px;\n            margin: 0 auto;\n            padding: 32px 16px;\n        }\n        \n        header {\n            margin-bottom: 48px;\n        }\n        \n        h1 {\n            font-size: 32px;\n            font-weight: bold;\n            margin-bottom: 8px;\n            color: #0f172a;\n        }\n        \n        .date-range {\n            font-size: 14px;\n            color: #64748b;\n            margin-bottom: 24px;\n        }\n        \n        .kpi-grid {\n            display: grid;\n            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));\n            gap: 16px;\n            margin-bottom: 32px;\n        }\n        \n        .kpi-card {\n            background: white;\n            border-radius: 8px;\n            padding: 20px;\n            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);\n            border-left: 4px solid #2563eb;\n        }\n        \n        .kpi-card h3 {\n            font-size: 12px;\n            font-weight: 600;\n            text-transform: uppercase;\n            color: #64748b;\n            margin-bottom: 8px;\n            letter-spacing: 0.5px;\n        }\n        \n        .kpi-value {\n            font-size: 32px;\n            font-weight: bold;\n            color: #0f172a;\n        }\n        \n        .kpi-card.secondary {\n            border-left-color: #7c3aed;\n        }\n        \n        .kpi-card.accent {\n            border-left-color: #059669;\n        }\n        \n        main {\n            display: grid;\n            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));\n            gap: 24px;\n        }\n        \n        .chart-card {\n            background: white;\n            border-radius: 8px;\n            padding: 24px;\n            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);\n        }\n        \n        .chart-card h2 {\n            font-size: 18px;\n            font-weight: 600;\n            margin-bottom: 16px;\n            color: #0f172a;\n        }\n        \n        .chart-card p {\n            font-size: 13px;\n            color: #64748b;\n            margin-bottom: 16px;\n        }\n        \n        .chart-container {\n            width: 100%;\n            height: 400px;\n            position: relative;\n        }\n        \n        @media (max-width: 768px) {\n            main {\n                grid-template-columns: 1fr;\n            }\n            \n            .kpi-grid {\n                grid-template-columns: 1fr 1fr;\n            }\n            \n            h1 {\n                font-size: 24px;\n            }\n        }\n    </style>\n</head>\n<body>\n    <div class=\"dashboard\">\n        <header>\n            <h1>Web Analytics Dashboard</h1>\n            <div class=\"date-range\">Data from January 10, 2026 to January 10, 2026</div>\n            \n            <div class=\"kpi-grid\">\n                <div class=\"kpi-card\">\n                    <h3>Total Page Views</h3>\n                    <div class=\"kpi-value\">10,000</div>\n                </div>\n                <div class=\"kpi-card secondary\">\n                    <h3>Unique Visitors</h3>\n                    <div class=\"kpi-value\">5,337</div>\n                </div>\n                <div class=\"kpi-card accent\">\n                    <h3>Avg Pages per Visitor</h3>\n                    <div class=\"kpi-value\">1.87</div>\n                </div>\n                <div class=\"kpi-card\">\n                    <h3>Top Traffic Source</h3>\n                    <div class=\"kpi-value\" style=\"font-size: 18px; word-break: break-word;\">Direct / None</div>\n                </div>\n            </div>\n        </header>\n        \n        <main>\n            <!-- Traffic Trends -->\n            <div class=\"chart-card\" style=\"grid-column: 1 / -1;\">\n                <h2>Traffic Over Time</h2>\n                <p>Hourly page views and unique visitors throughout the day</p>\n                <div class=\"chart-container\" id=\"traffic-trend-chart\"></div>\n            </div>\n            \n            <!-- Top Pages -->\n            <div class=\"chart-card\">\n                <h2>Top Pages</h2>\n                <p>Most visited pages on your site</p>\n                <div class=\"chart-container\" id=\"top-pages-chart\"></div>\n            </div>\n            \n            <!-- Traffic Sources -->\n            <div class=\"chart-card\">\n                <h2>Traffic Sources (Referrers)</h2>\n                <p>Where your visitors are coming from</p>\n                <div class=\"chart-container\" id=\"referrer-chart\"></div>\n            </div>\n            \n            <!-- Geographic Distribution -->\n            <div class=\"chart-card\" style=\"grid-column: 1 / -1;\">\n                <h2>Geographic Distribution</h2>\n                <p>Page views by country</p>\n                <div class=\"chart-container\" id=\"geo-chart\"></div>\n            </div>\n            \n            <!-- Hourly Pattern -->\n            <div class=\"chart-card\">\n                <h2>Traffic by Hour of Day</h2>\n                <p>When your visitors are most active</p>\n                <div class=\"chart-container\" id=\"hourly-pattern-chart\"></div>\n            </div>\n            \n            <!-- Site Sections -->\n            <div class=\"chart-card\">\n                <h2>Traffic by Site Section</h2>\n                <p>Performance of different content areas</p>\n                <div class=\"chart-container\" id=\"sections-chart\"></div>\n            </div>\n        </main>\n    </div>\n    \n    <script>\n        // Embedded Data\n        const hourlyData = [{\"datetime\": \"2026-01-10 00:00\", \"page_views\": 462, \"unique_visitors\": 138}, {\"datetime\": \"2026-01-10 01:00\", \"page_views\": 261, \"unique_visitors\": 124}, {\"datetime\": \"2026-01-10 02:00\", \"page_views\": 170, \"unique_visitors\": 108}, {\"datetime\": \"2026-01-10 03:00\", \"page_views\": 315, \"unique_visitors\": 145}, {\"datetime\": \"2026-01-10 04:00\", \"page_views\": 368, \"unique_visitors\": 178}, {\"datetime\": \"2026-01-10 05:00\", \"page_views\": 324, \"unique_visitors\": 210}, {\"datetime\": \"2026-01-10 06:00\", \"page_views\": 341, \"unique_visitors\": 199}, {\"datetime\": \"2026-01-10 07:00\", \"page_views\": 415, \"unique_visitors\": 230}, {\"datetime\": \"2026-01-10 08:00\", \"page_views\": 467, \"unique_visitors\": 263}, {\"datetime\": \"2026-01-10 09:00\", \"page_views\": 694, \"unique_visitors\": 392}, {\"datetime\": \"2026-01-10 10:00\", \"page_views\": 514, \"unique_visitors\": 305}, {\"datetime\": \"2026-01-10 11:00\", \"page_views\": 454, \"unique_visitors\": 282}, {\"datetime\": \"2026-01-10 12:00\", \"page_views\": 451, \"unique_visitors\": 290}, {\"datetime\": \"2026-01-10 13:00\", \"page_views\": 597, \"unique_visitors\": 364}, {\"datetime\": \"2026-01-10 14:00\", \"page_views\": 627, \"unique_visitors\": 335}, {\"datetime\": \"2026-01-10 15:00\", \"page_views\": 598, \"unique_visitors\": 381}, {\"datetime\": \"2026-01-10 16:00\", \"page_views\": 589, \"unique_visitors\": 382}, {\"datetime\": \"2026-01-10 17:00\", \"page_views\": 615, \"unique_visitors\": 378}, {\"datetime\": \"2026-01-10 18:00\", \"page_views\": 486, \"unique_visitors\": 286}, {\"datetime\": \"2026-01-10 19:00\", \"page_views\": 279, \"unique_visitors\": 178}, {\"datetime\": \"2026-01-10 20:00\", \"page_views\": 258, \"unique_visitors\": 148}, {\"datetime\": \"2026-01-10 21:00\", \"page_views\": 252, \"unique_visitors\": 121}, {\"datetime\": \"2026-01-10 22:00\", \"page_views\": 284, \"unique_visitors\": 180}, {\"datetime\": \"2026-01-10 23:00\", \"page_views\": 179, \"unique_visitors\": 66}];\n        const topPages = {\"ai storage\": 3560, \"edge storage\": 1341, \"\\u4e3b\\u9875\": 1002, \"solidigm data storage solutions\": 631, \"\\u6570\\u636e\\u4e2d\\u5fc3\": 577, \"d5-p5336\": 419, \"search results page\": 362, \"data center\": 175, \"secure erase\": 163, \"data storage optimized for the ai era\": 157, \"solidigm storage tool\\u2122\": 96, \"optimizing ai workloads with solidigm\\u2122 solid-state drives\": 81, \"the incredible power of power efficient storage: how modern ssds are transforming the data center\": 74, \"support (index - drivers & downloads)\": 62, \"solidigm synergy\\u2122 software and driver for client solid state drives\": 49};\n        const referrerData = {\"Direct / None\": 5344, \"google.com\": 1351, \"playhop.com\": 771, \"youtube.com\": 454, \"doubleclick.net\": 368, \"global-view.com\": 352, \"bing.com\": 196, \"googlesyndication.com\": 194, \"sportspersia.com\": 191, \"yahoo.com\": 115};\n        const geoData = [{\"country\": \"usa\", \"code\": \"USA\", \"pageviews\": 7007, \"visitors\": 4091}, {\"country\": \"jpn\", \"code\": \"JPN\", \"pageviews\": 506, \"visitors\": 144}, {\"country\": \"chn\", \"code\": \"CHN\", \"pageviews\": 487, \"visitors\": 156}, {\"country\": \"hkg\", \"code\": \"HKG\", \"pageviews\": 407, \"visitors\": 105}, {\"country\": \"deu\", \"code\": \"DEU\", \"pageviews\": 310, \"visitors\": 154}, {\"country\": \"irl\", \"code\": \"IRL\", \"pageviews\": 286, \"visitors\": 285}, {\"country\": \"gbr\", \"code\": \"GBR\", \"pageviews\": 126, \"visitors\": 84}, {\"country\": \"kor\", \"code\": \"KOR\", \"pageviews\": 115, \"visitors\": 45}, {\"country\": \"can\", \"code\": \"CAN\", \"pageviews\": 112, \"visitors\": 53}, {\"country\": \"twn\", \"code\": \"TWN\", \"pageviews\": 99, \"visitors\": 20}];\n        const sectionData = {\"ai storage\": 3552, \"edge storage\": 1189, \"\\u6570\\u636e\\u4e2d\\u5fc3\": 585, \"solidigm data storage solutions\": 555, \"\\u4e3b\\u9875\": 461, \"d5-p5336\": 387, \"search results page\": 224, \"faqs\": 197, \"\\u641c\\u7d22\\u7ed3\\u679c\\u9875\\u9762\": 195, \"\\u5e38\\u89c1\\u95ee\\u9898\": 190};\n        const hourlyPattern = {\"0\": 462, \"1\": 261, \"2\": 170, \"3\": 315, \"4\": 368, \"5\": 324, \"6\": 341, \"7\": 415, \"8\": 467, \"9\": 694, \"10\": 514, \"11\": 454, \"12\": 451, \"13\": 597, \"14\": 627, \"15\": 598, \"16\": 589, \"17\": 615, \"18\": 486, \"19\": 279, \"20\": 258, \"21\": 252, \"22\": 284, \"23\": 179};\n        \n        // Color scheme\n        const colors = {\n            primary: '#2563eb',\n            secondary: '#7c3aed',\n            accent: '#059669',\n            warning: '#d97706',\n            gray: '#64748b'\n        };\n        \n        // Chart 1: Traffic Trend (dual axis - page views & visitors)\n        const trendDates = hourlyData.map(d => d.datetime);\n        const trendPV = hourlyData.map(d => d.page_views);\n        const trendVisitors = hourlyData.map(d => d.unique_visitors);\n        \n        const tracePV = {\n            x: trendDates,\n            y: trendPV,\n            name: 'Page Views',\n            type: 'scatter',\n            mode: 'lines+markers',\n            line: { color: colors.primary, width: 2 },\n            fill: 'tozeroy',\n            fillcolor: 'rgba(37, 99, 235, 0.1)',\n            hovertemplate: '<b>%{x}</b><br>Page Views: %{y}<extra></extra>'\n        };\n        \n        const traceVisitors = {\n            x: trendDates,\n            y: trendVisitors,\n            name: 'Unique Visitors',\n            type: 'scatter',\n            mode: 'lines+markers',\n            line: { color: colors.secondary, width: 2 },\n            yaxis: 'y2',\n            hovertemplate: '<b>%{x}</b><br>Visitors: %{y}<extra></extra>'\n        };\n        \n        const layoutTrend = {\n            title: {'text': '', 'x': 0, 'y': 0.95},\n            xaxis: { title: '', showgrid: false },\n            yaxis: { title: 'Page Views', titlefont: { color: colors.primary }, tickfont: { color: colors.primary } },\n            yaxis2: { title: 'Unique Visitors', titlefont: { color: colors.secondary }, tickfont: { color: colors.secondary }, overlaying: 'y', side: 'right' },\n            hovermode: 'x unified',\n            margin: { l: 60, r: 60, t: 30, b: 40 },\n            paper_bgcolor: 'transparent',\n            plot_bgcolor: 'transparent'\n        };\n        \n        Plotly.newPlot('traffic-trend-chart', [tracePV, traceVisitors], layoutTrend, {responsive: true});\n        \n        // Chart 2: Top Pages\n        const pageNames = Object.keys(topPages).reverse();\n        const pageCounts = Object.values(topPages).reverse();\n        \n        const tracePages = {\n            y: pageNames,\n            x: pageCounts,\n            type: 'bar',\n            orientation: 'h',\n            marker: { color: colors.primary },\n            hovertemplate: '%{y}<br>Views: %{x}<extra></extra>'\n        };\n        \n        const layoutPages = {\n            title: {'text': '', 'x': 0, 'y': 0.95},\n            xaxis: { title: 'Page Views', showgrid: true, gridwidth: 1, gridcolor: '#e2e8f0' },\n            yaxis: { title: '' },\n            margin: { l: 350, r: 40, t: 30, b: 40 },\n            paper_bgcolor: 'transparent',\n            plot_bgcolor: 'transparent',\n            height: 400\n        };\n        \n        Plotly.newPlot('top-pages-chart', [tracePages], layoutPages, {responsive: true});\n        \n        // Chart 3: Referrer Breakdown (pie)\n        const referrerNames = Object.keys(referrerData);\n        const referrerCounts = Object.values(referrerData);\n        \n        const traceReferrer = {\n            labels: referrerNames,\n            values: referrerCounts,\n            type: 'pie',\n            hovertemplate: '<b>%{label}</b><br>Page Views: %{value}<br>%{percentRoot}<extra></extra>',\n            marker: {\n                colors: [colors.primary, colors.secondary, colors.accent, colors.warning, '#06b6d4', '#f59e0b', '#8b5cf6', '#ec4899', '#6366f1', '#14b8a6']\n            }\n        };\n        \n        const layoutReferrer = {\n            title: {'text': '', 'x': 0, 'y': 0.95},\n            margin: { l: 40, r: 40, t: 30, b: 40 },\n            paper_bgcolor: 'transparent',\n            plot_bgcolor: 'transparent'\n        };\n        \n        Plotly.newPlot('referrer-chart', [traceReferrer], layoutReferrer, {responsive: true});\n        \n        // Chart 4: Geographic Distribution\n        const geoCountries = geoData.map(d => d.code);\n        const geoPV = geoData.map(d => d.pageviews);\n        \n        const traceGeo = {\n            x: geoCountries,\n            y: geoPV,\n            type: 'bar',\n            marker: { color: geoPV, colorscale: 'Blues', showscale: true },\n            hovertemplate: '<b>%{x}</b><br>Page Views: %{y}<extra></extra>'\n        };\n        \n        const layoutGeo = {\n            title: {'text': '', 'x': 0, 'y': 0.95},\n            xaxis: { title: 'Country' },\n            yaxis: { title: 'Page Views', showgrid: true, gridwidth: 1, gridcolor: '#e2e8f0' },\n            margin: { l: 60, r: 40, t: 30, b: 40 },\n            paper_bgcolor: 'transparent',\n            plot_bgcolor: 'transparent'\n        };\n        \n        Plotly.newPlot('geo-chart', [traceGeo], layoutGeo, {responsive: true});\n        \n        // Chart 5: Hourly Pattern\n        const hours = Object.keys(hourlyPattern).map(h => h + ':00');\n        const hourlyValues = Object.values(hourlyPattern);\n        \n        const traceHourly = {\n            x: hours,\n            y: hourlyValues,\n            type: 'bar',\n            marker: { color: colors.accent },\n            hovertemplate: '<b>%{x}</b><br>Page Views: %{y}<extra></extra>'\n        };\n        \n        const layoutHourly = {\n            title: {'text': '', 'x': 0, 'y': 0.95},\n            xaxis: { title: 'Hour of Day' },\n            yaxis: { title: 'Page Views', showgrid: true, gridwidth: 1, gridcolor: '#e2e8f0' },\n            margin: { l: 60, r: 40, t: 30, b: 40 },\n            paper_bgcolor: 'transparent',\n            plot_bgcolor: 'transparent'\n        };\n        \n        Plotly.newPlot('hourly-pattern-chart', [traceHourly], layoutHourly, {responsive: true});\n        \n        // Chart 6: Site Sections\n        const sectionNames = Object.keys(sectionData).reverse();\n        const sectionValues = Object.values(sectionData).reverse();\n        \n        const traceSections = {\n            y: sectionNames,\n            x: sectionValues,\n            type: 'bar',\n            orientation: 'h',\n            marker: { color: colors.warning },\n            hovertemplate: '%{y}<br>Views: %{x}<extra></extra>'\n        };\n        \n        const layoutSections = {\n            title: {'text': '', 'x': 0, 'y': 0.95},\n            xaxis: { title: 'Page Views', showgrid: true, gridwidth: 1, gridcolor: '#e2e8f0' },\n            yaxis: { title: '' },\n            margin: { l: 200, r: 40, t: 30, b: 40 },\n            paper_bgcolor: 'transparent',\n            plot_bgcolor: 'transparent',\n            height: 300\n        };\n        \n        Plotly.newPlot('sections-chart', [traceSections], layoutSections, {responsive: true});\n    </script>\n</body>\n</html>\n"}], "grading": {"eval_id": "eval-1-full-dashboard", "run_type": "with_skill", "expectations": [{"text": "Output is a single self-contained HTML file", "passed": true, "evidence": "Found HTML file: web-analytics-dashboard.html (16638 chars)"}, {"text": "Dashboard uses Plotly.js for interactive charts", "passed": true, "evidence": "Plotly.js reference found"}, {"text": "Dashboard includes KPI summary cards", "passed": true, "evidence": "KPI/metric card elements found"}, {"text": "Dashboard includes a traffic over time chart", "passed": true, "evidence": "Traffic trend chart found"}, {"text": "Dashboard includes a top pages visualization", "passed": true, "evidence": "Top pages section found"}, {"text": "Dashboard includes geographic distribution", "passed": true, "evidence": "Geographic breakdown found"}, {"text": "Dashboard includes referrer breakdown", "passed": true, "evidence": "Referrer analysis found"}, {"text": "CSS includes responsive layout", "passed": true, "evidence": "Responsive CSS detected"}, {"text": "Professional appearance", "passed": true, "evidence": "Subjective - requires human evaluation"}]}}, {"id": "eval-1-full-dashboard-without_skill", "prompt": "I have this Excel file with our website analytics data (dotcom_analytics.xlsx). Can you build me an interactive dashboard showing traffic trends, top pages, where our visitors come from geographically, and referrer breakdown?", "eval_id": 1, "outputs": [{"name": "analytics-dashboard.html", "type": "text", "content": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Website Analytics Dashboard</title>\n    <script src=\"https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js\"></script>\n    <script src=\"https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js\"></script>\n    <style>\n        * {\n            margin: 0;\n            padding: 0;\n            box-sizing: border-box;\n        }\n        \n        body {\n            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\n            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n            min-height: 100vh;\n            padding: 20px;\n        }\n        \n        .container {\n            max-width: 1600px;\n            margin: 0 auto;\n        }\n        \n        .header {\n            background: white;\n            padding: 30px;\n            border-radius: 10px;\n            margin-bottom: 30px;\n            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);\n        }\n        \n        .header h1 {\n            color: #333;\n            margin-bottom: 10px;\n            font-size: 2.5em;\n        }\n        \n        .header p {\n            color: #666;\n            font-size: 1.1em;\n        }\n        \n        .metrics-row {\n            display: grid;\n            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));\n            gap: 20px;\n            margin-bottom: 30px;\n        }\n        \n        .metric-card {\n            background: white;\n            padding: 25px;\n            border-radius: 10px;\n            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);\n            text-align: center;\n        }\n        \n        .metric-card h3 {\n            color: #666;\n            font-size: 0.9em;\n            text-transform: uppercase;\n            margin-bottom: 15px;\n            letter-spacing: 1px;\n        }\n        \n        .metric-card .value {\n            font-size: 2.5em;\n            font-weight: bold;\n            color: #667eea;\n        }\n        \n        .charts-grid {\n            display: grid;\n            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));\n            gap: 30px;\n            margin-bottom: 30px;\n        }\n        \n        .chart-container {\n            background: white;\n            padding: 25px;\n            border-radius: 10px;\n            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);\n            min-height: 400px;\n            display: flex;\n            flex-direction: column;\n        }\n        \n        .chart-container h2 {\n            color: #333;\n            margin-bottom: 20px;\n            font-size: 1.5em;\n            border-bottom: 3px solid #667eea;\n            padding-bottom: 10px;\n        }\n        \n        .chart-wrapper {\n            flex: 1;\n            position: relative;\n        }\n        \n        .full-width {\n            grid-column: 1 / -1;\n        }\n        \n        .table-container {\n            background: white;\n            padding: 25px;\n            border-radius: 10px;\n            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);\n            margin-bottom: 30px;\n        }\n        \n        .table-container h2 {\n            color: #333;\n            margin-bottom: 20px;\n            font-size: 1.5em;\n            border-bottom: 3px solid #667eea;\n            padding-bottom: 10px;\n        }\n        \n        table {\n            width: 100%;\n            border-collapse: collapse;\n        }\n        \n        th {\n            background-color: #667eea;\n            color: white;\n            padding: 12px;\n            text-align: left;\n            font-weight: 600;\n        }\n        \n        td {\n            padding: 12px;\n            border-bottom: 1px solid #eee;\n        }\n        \n        tr:hover {\n            background-color: #f5f5f5;\n        }\n        \n        .footer {\n            text-align: center;\n            color: white;\n            padding: 20px;\n            margin-top: 30px;\n            font-size: 0.9em;\n        }\n        \n        @media (max-width: 1024px) {\n            .charts-grid {\n                grid-template-columns: 1fr;\n            }\n            \n            .header h1 {\n                font-size: 1.8em;\n            }\n        }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <div class=\"header\">\n            <h1>Website Analytics Dashboard</h1>\n            <p>Real-time traffic analysis and visitor insights - January 10, 2026</p>\n        </div>\n        \n        <div class=\"metrics-row\">\n            <div class=\"metric-card\">\n                <h3>Total Page Views</h3>\n                <div class=\"value\">10,000</div>\n            </div>\n            <div class=\"metric-card\">\n                <h3>Countries</h3>\n                <div class=\"value\">15+</div>\n            </div>\n            <div class=\"metric-card\">\n                <h3>Top Referrer</h3>\n                <div class=\"value\">Google</div>\n            </div>\n            <div class=\"metric-card\">\n                <h3>Conversion Rate</h3>\n                <div class=\"value\">Tracking</div>\n            </div>\n        </div>\n        \n        <div class=\"charts-grid\">\n            <div class=\"chart-container full-width\">\n                <h2>Traffic Trends</h2>\n                <div class=\"chart-wrapper\">\n                    <canvas id=\"trafficChart\"></canvas>\n                </div>\n            </div>\n            \n            <div class=\"chart-container\">\n                <h2>Top Pages</h2>\n                <div class=\"chart-wrapper\">\n                    <canvas id=\"pagesChart\"></canvas>\n                </div>\n            </div>\n            \n            <div class=\"chart-container\">\n                <h2>Geographic Distribution</h2>\n                <div class=\"chart-wrapper\">\n                    <canvas id=\"geoChart\"></canvas>\n                </div>\n            </div>\n            \n            <div class=\"chart-container\">\n                <h2>Top Referrers</h2>\n                <div class=\"chart-wrapper\">\n                    <canvas id=\"referrerChart\"></canvas>\n                </div>\n            </div>\n            \n            <div class=\"chart-container\">\n                <h2>Regional Breakdown (USA)</h2>\n                <div class=\"chart-wrapper\">\n                    <canvas id=\"regionalChart\"></canvas>\n                </div>\n            </div>\n        </div>\n        \n        <div class=\"table-container\">\n            <h2>Top 10 Pages Detailed View</h2>\n            <table>\n                <thead>\n                    <tr>\n                        <th>Page Name</th>\n                        <th>Page Views</th>\n                        <th>% of Total</th>\n                    </tr>\n                </thead>\n                <tbody id=\"tableBody\">\n                </tbody>\n            </table>\n        </div>\n        \n        <div class=\"footer\">\n            <p>Dashboard generated on 2026-03-18 | Data from January 10, 2026</p>\n        </div>\n    </div>\n    \n    <script>\n        // Data\n        const dailyData = [{\"hit_datetime\":\"2026-01-10\",\"pageviews\":10000}];\n        const topPagesData = [{\"page_name\":\"ai storage\",\"pageviews\":3560},{\"page_name\":\"edge storage\",\"pageviews\":1341},{\"page_name\":\"\\u4e3b\\u9875\",\"pageviews\":1002},{\"page_name\":\"solidigm data storage solutions\",\"pageviews\":631},{\"page_name\":\"\\u6570\\u636e\\u4e2d\\u5fc3\",\"pageviews\":577},{\"page_name\":\"d5-p5336\",\"pageviews\":419},{\"page_name\":\"search results page\",\"pageviews\":362},{\"page_name\":\"data center\",\"pageviews\":175},{\"page_name\":\"secure erase\",\"pageviews\":163},{\"page_name\":\"data storage optimized for the ai era\",\"pageviews\":157}];\n        const geoData = [{\"country\":\"usa\",\"pageviews\":7007},{\"country\":\"jpn\",\"pageviews\":506},{\"country\":\"chn\",\"pageviews\":487},{\"country\":\"hkg\",\"pageviews\":407},{\"country\":\"deu\",\"pageviews\":310},{\"country\":\"irl\",\"pageviews\":286},{\"country\":\"gbr\",\"pageviews\":126},{\"country\":\"kor\",\"pageviews\":115},{\"country\":\"can\",\"pageviews\":112},{\"country\":\"twn\",\"pageviews\":99},{\"country\":\"ind\",\"pageviews\":78},{\"country\":\"rus\",\"pageviews\":70},{\"country\":\"mex\",\"pageviews\":55},{\"country\":\"pol\",\"pageviews\":28},{\"country\":\"vnm\",\"pageviews\":21}];\n        const referrerData = [{\"domain\":\"google.com\",\"pageviews\":1351},{\"domain\":\"playhop.com\",\"pageviews\":771},{\"domain\":\"youtube.com\",\"pageviews\":454},{\"domain\":\"doubleclick.net\",\"pageviews\":368},{\"domain\":\"global-view.com\",\"pageviews\":352},{\"domain\":\"bing.com\",\"pageviews\":196},{\"domain\":\"googlesyndication.com\",\"pageviews\":194},{\"domain\":\"sportspersia.com\",\"pageviews\":191},{\"domain\":\"yahoo.com\",\"pageviews\":115},{\"domain\":\"baidu.com\",\"pageviews\":58}];\n        const regionalData = [{\"region\":\"ca\",\"pageviews\":1211},{\"region\":\"va\",\"pageviews\":680},{\"region\":\"tx\",\"pageviews\":493},{\"region\":\"ny\",\"pageviews\":485},{\"region\":\"fl\",\"pageviews\":472},{\"region\":\"no region\",\"pageviews\":411},{\"region\":\"13\",\"pageviews\":396},{\"region\":\"ga\",\"pageviews\":285},{\"region\":\"d\",\"pageviews\":284},{\"region\":\"he\",\"pageviews\":241}];\n        \n        // Chart configuration\n        const chartOptions = {\n            responsive: true,\n            maintainAspectRatio: false,\n            plugins: {\n                legend: {\n                    labels: {\n                        font: {\n                            size: 12,\n                            weight: '500'\n                        },\n                        padding: 15,\n                        usePointStyle: true\n                    }\n                }\n            },\n            scales: {\n                x: {\n                    grid: {\n                        drawBorder: false,\n                        color: 'rgba(0, 0, 0, 0.05)'\n                    },\n                    ticks: {\n                        font: {\n                            size: 11\n                        }\n                    }\n                },\n                y: {\n                    grid: {\n                        drawBorder: false,\n                        color: 'rgba(0, 0, 0, 0.05)'\n                    },\n                    ticks: {\n                        font: {\n                            size: 11\n                        }\n                    }\n                }\n            }\n        };\n        \n        // Chart.js Plugin Registry\n        Chart.register(ChartDataLabels);\n        \n        // 1. Traffic Trends Chart\n        const trafficCtx = document.getElementById('trafficChart').getContext('2d');\n        new Chart(trafficCtx, {\n            type: 'line',\n            data: {\n                labels: dailyData.map(d => d.hit_datetime),\n                datasets: [{\n                    label: 'Page Views',\n                    data: dailyData.map(d => d.pageviews),\n                    borderColor: '#667eea',\n                    backgroundColor: 'rgba(102, 126, 234, 0.1)',\n                    borderWidth: 3,\n                    fill: true,\n                    tension: 0.4,\n                    pointRadius: 6,\n                    pointBackgroundColor: '#667eea',\n                    pointBorderColor: '#fff',\n                    pointBorderWidth: 2,\n                    pointHoverRadius: 8\n                }]\n            },\n            options: {\n                ...chartOptions,\n                plugins: {\n                    ...chartOptions.plugins,\n                    datalabels: {\n                        display: false\n                    },\n                    legend: {\n                        display: true,\n                        labels: {\n                            boxWidth: 12,\n                            font: {\n                                size: 12,\n                                weight: '500'\n                            },\n                            padding: 15\n                        }\n                    }\n                },\n                interaction: {\n                    mode: 'index',\n                    intersect: false\n                }\n            }\n        });\n        \n        // 2. Top Pages Chart\n        const pagesCtx = document.getElementById('pagesChart').getContext('2d');\n        new Chart(pagesCtx, {\n            type: 'bar',\n            data: {\n                labels: topPagesData.map(d => d.page_name.substring(0, 20)),\n                datasets: [{\n                    label: 'Page Views',\n                    data: topPagesData.map(d => d.pageviews),\n                    backgroundColor: [\n                        '#667eea', '#764ba2', '#f093fb', '#4facfe', '#00f2fe',\n                        '#43e97b', '#fa709a', '#fee140', '#30b0fe', '#a8edea'\n                    ],\n                    borderRadius: 6,\n                    borderSkipped: false\n                }]\n            },\n            options: {\n                indexAxis: 'y',\n                ...chartOptions,\n                plugins: {\n                    ...chartOptions.plugins,\n                    datalabels: {\n                        anchor: 'end',\n                        align: 'end',\n                        color: '#333',\n                        font: {\n                            weight: 'bold'\n                        }\n                    }\n                }\n            }\n        });\n        \n        // 3. Geographic Distribution Chart\n        const geoCtx = document.getElementById('geoChart').getContext('2d');\n        new Chart(geoCtx, {\n            type: 'doughnut',\n            data: {\n                labels: geoData.map(d => d.country.toUpperCase()),\n                datasets: [{\n                    data: geoData.map(d => d.pageviews),\n                    backgroundColor: [\n                        '#667eea', '#764ba2', '#f093fb', '#4facfe', '#00f2fe',\n                        '#43e97b', '#fa709a', '#fee140', '#30b0fe', '#a8edea',\n                        '#ff9a56', '#ff758c', '#ffa726', '#ab47bc', '#5c6bc0'\n                    ],\n                    borderColor: '#fff',\n                    borderWidth: 2\n                }]\n            },\n            options: {\n                ...chartOptions,\n                plugins: {\n                    ...chartOptions.plugins,\n                    datalabels: {\n                        color: '#fff',\n                        font: {\n                            weight: 'bold',\n                            size: 11\n                        },\n                        formatter: (value, ctx) => {\n                            const sum = ctx.dataset.data.reduce((a, b) => a + b, 0);\n                            return Math.round((value / sum) * 100) + '%';\n                        }\n                    }\n                }\n            }\n        });\n        \n        // 4. Top Referrers Chart\n        const referrerCtx = document.getElementById('referrerChart').getContext('2d');\n        new Chart(referrerCtx, {\n            type: 'bar',\n            data: {\n                labels: referrerData.map(d => d.domain),\n                datasets: [{\n                    label: 'Visitors',\n                    data: referrerData.map(d => d.pageviews),\n                    backgroundColor: '#764ba2',\n                    borderRadius: 6,\n                    borderSkipped: false\n                }]\n            },\n            options: {\n                ...chartOptions,\n                indexAxis: 'y',\n                plugins: {\n                    ...chartOptions.plugins,\n                    datalabels: {\n                        anchor: 'end',\n                        align: 'end',\n                        color: '#333',\n                        font: {\n                            weight: 'bold'\n                        }\n                    }\n                }\n            }\n        });\n        \n        // 5. Regional Breakdown Chart\n        const regionalCtx = document.getElementById('regionalChart').getContext('2d');\n        new Chart(regionalCtx, {\n            type: 'bar',\n            data: {\n                labels: regionalData.map(d => d.region),\n                datasets: [{\n                    label: 'Page Views',\n                    data: regionalData.map(d => d.pageviews),\n                    backgroundColor: '#43e97b',\n                    borderRadius: 6,\n                    borderSkipped: false\n                }]\n            },\n            options: {\n                ...chartOptions,\n                plugins: {\n                    ...chartOptions.plugins,\n                    datalabels: {\n                        anchor: 'end',\n                        align: 'end',\n                        color: '#333',\n                        font: {\n                            weight: 'bold'\n                        }\n                    }\n                }\n            }\n        });\n        \n        // Populate table\n        const tableBody = document.getElementById('tableBody');\n        const totalViews = topPagesData.reduce((sum, d) => sum + d.pageviews, 0);\n        \n        topPagesData.forEach((page, index) => {\n            const row = document.createElement('tr');\n            const percentage = ((page.pageviews / totalViews) * 100).toFixed(2);\n            row.innerHTML = `\n                <td><strong>${index + 1}. ${page.page_name}</strong></td>\n                <td>${page.pageviews.toLocaleString()}</td>\n                <td>${percentage}%</td>\n            `;\n            tableBody.appendChild(row);\n        });\n    </script>\n</body>\n</html>"}], "grading": {"eval_id": "eval-1-full-dashboard", "run_type": "without_skill", "expectations": [{"text": "Output is a single self-contained HTML file", "passed": true, "evidence": "Found HTML file: analytics-dashboard.html (17223 chars)"}, {"text": "Dashboard uses Plotly.js for interactive charts", "passed": false, "evidence": "No Plotly reference; may use Chart.js or other"}, {"text": "Dashboard includes KPI summary cards", "passed": true, "evidence": "KPI/metric card elements found"}, {"text": "Dashboard includes a traffic over time chart", "passed": true, "evidence": "Traffic trend chart found"}, {"text": "Dashboard includes a top pages visualization", "passed": true, "evidence": "Top pages section found"}, {"text": "Dashboard includes geographic distribution", "passed": true, "evidence": "Geographic breakdown found"}, {"text": "Dashboard includes referrer breakdown", "passed": true, "evidence": "Referrer analysis found"}, {"text": "CSS includes responsive layout", "passed": true, "evidence": "Responsive CSS detected"}, {"text": "Professional appearance", "passed": true, "evidence": "Subjective - requires human evaluation"}]}}, {"id": "eval-2-saas-conversion-with_skill", "prompt": "Here's a CSV of our SaaS product's web analytics for Jan-Feb 2026. I need a dashboard that shows our conversion funnel, traffic sources, device breakdown, and daily trends. Make it look professional.", "eval_id": 2, "outputs": [{"name": "dashboard.html", "type": "text", "content": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>SaaS Analytics Dashboard</title>\n    <script src=\"https://cdn.plot.ly/plotly-latest.min.js\"></script>\n    <style>\n        * {\n            margin: 0;\n            padding: 0;\n            box-sizing: border-box;\n        }\n\n        body {\n            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;\n            background: #f8fafc;\n            color: #1e293b;\n        }\n\n        .dashboard {\n            max-width: 1400px;\n            margin: 0 auto;\n            padding: 20px;\n        }\n\n        header {\n            background: #ffffff;\n            padding: 40px 30px;\n            border-radius: 8px;\n            margin-bottom: 30px;\n            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);\n        }\n\n        h1 {\n            font-size: 28px;\n            font-weight: 700;\n            margin-bottom: 10px;\n            color: #0f172a;\n        }\n\n        .date-range {\n            font-size: 14px;\n            color: #64748b;\n            margin-bottom: 25px;\n        }\n\n        .kpi-grid {\n            display: grid;\n            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));\n            gap: 20px;\n            margin-top: 30px;\n        }\n\n        .kpi-card {\n            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);\n            padding: 20px;\n            border-radius: 8px;\n            border: 1px solid #e2e8f0;\n        }\n\n        .kpi-value {\n            font-size: 32px;\n            font-weight: 700;\n            color: #2563eb;\n            margin: 10px 0;\n            line-height: 1;\n        }\n\n        .kpi-label {\n            font-size: 13px;\n            color: #64748b;\n            font-weight: 600;\n            text-transform: uppercase;\n            letter-spacing: 0.5px;\n        }\n\n        main {\n            display: grid;\n            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));\n            gap: 25px;\n        }\n\n        .card {\n            background: #ffffff;\n            border-radius: 8px;\n            padding: 25px;\n            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);\n        }\n\n        .card-full {\n            grid-column: 1 / -1;\n        }\n\n        .card-title {\n            font-size: 18px;\n            font-weight: 600;\n            margin-bottom: 20px;\n            color: #0f172a;\n            border-bottom: 2px solid #e2e8f0;\n            padding-bottom: 15px;\n        }\n\n        .chart {\n            min-height: 400px;\n        }\n\n        @media (max-width: 768px) {\n            main {\n                grid-template-columns: 1fr;\n            }\n\n            .card-full {\n                grid-column: 1;\n            }\n\n            .kpi-grid {\n                grid-template-columns: 1fr;\n            }\n\n            header {\n                padding: 20px 15px;\n            }\n\n            .card {\n                padding: 15px;\n            }\n\n            .chart {\n                min-height: 300px;\n            }\n        }\n\n        .chart-description {\n            font-size: 13px;\n            color: #64748b;\n            margin-top: 12px;\n            font-style: italic;\n        }\n\n        .table-container {\n            overflow-x: auto;\n            margin-top: 15px;\n        }\n\n        table {\n            width: 100%;\n            border-collapse: collapse;\n            font-size: 13px;\n        }\n\n        table th {\n            background: #f1f5f9;\n            padding: 10px;\n            text-align: left;\n            font-weight: 600;\n            border-bottom: 1px solid #e2e8f0;\n            color: #475569;\n        }\n\n        table td {\n            padding: 10px;\n            border-bottom: 1px solid #e2e8f0;\n        }\n\n        table tr:hover {\n            background: #f8fafc;\n        }\n    </style>\n</head>\n<body>\n    <div class=\"dashboard\">\n        <header>\n            <h1>SaaS Analytics Dashboard</h1>\n            <div class=\"date-range\">\n                <strong>Period:</strong> 2026-01-01 to 2026-03-01\n            </div>\n\n            <div class=\"kpi-grid\">\n                <div class=\"kpi-card\">\n                    <div class=\"kpi-label\">Total Visitors</div>\n                    <div class=\"kpi-value\">1,310</div>\n                </div>\n                <div class=\"kpi-card\">\n                    <div class=\"kpi-label\">Page Views</div>\n                    <div class=\"kpi-value\">3,000</div>\n                </div>\n                <div class=\"kpi-card\">\n                    <div class=\"kpi-label\">Conversions</div>\n                    <div class=\"kpi-value\">137</div>\n                </div>\n                <div class=\"kpi-card\">\n                    <div class=\"kpi-label\">Conversion Rate</div>\n                    <div class=\"kpi-value\">4.57%</div>\n                </div>\n                <div class=\"kpi-card\">\n                    <div class=\"kpi-label\">Avg. Session Duration</div>\n                    <div class=\"kpi-value\">152s</div>\n                </div>\n            </div>\n        </header>\n\n        <main>\n            <!-- Conversion Funnel -->\n            <div class=\"card card-full\">\n                <div class=\"card-title\">Conversion Funnel</div>\n                <div id=\"funnel-chart\" class=\"chart\"></div>\n                <div class=\"chart-description\">Shows the progression through key pages and conversion rates at each stage</div>\n            </div>\n\n            <!-- Traffic Sources -->\n            <div class=\"card\">\n                <div class=\"card-title\">Traffic Sources</div>\n                <div id=\"sources-chart\" class=\"chart\"></div>\n                <div class=\"chart-description\">Distribution of visitors by traffic source</div>\n            </div>\n\n            <!-- Device Breakdown -->\n            <div class=\"card\">\n                <div class=\"card-title\">Device Breakdown</div>\n                <div id=\"device-chart\" class=\"chart\"></div>\n                <div class=\"chart-description\">Visitors by device type</div>\n            </div>\n\n            <!-- Daily Trends -->\n            <div class=\"card card-full\">\n                <div class=\"card-title\">Daily Traffic & Conversion Trends</div>\n                <div id=\"daily-chart\" class=\"chart\"></div>\n                <div class=\"chart-description\">Page views, unique visitors, and conversions over time</div>\n            </div>\n\n            <!-- Hourly Pattern -->\n            <div class=\"card\">\n                <div class=\"card-title\">Hourly Traffic Pattern</div>\n                <div id=\"hourly-chart\" class=\"chart\"></div>\n                <div class=\"chart-description\">Traffic distribution by hour of the day</div>\n            </div>\n\n            <!-- Top Pages -->\n            <div class=\"card\">\n                <div class=\"card-title\">Top Pages by Views</div>\n                <div id=\"pages-chart\" class=\"chart\"></div>\n                <div class=\"chart-description\">Most visited pages and their conversion performance</div>\n            </div>\n        </main>\n    </div>\n\n    <script>\n        // Embedded dashboard data\n        const dashboardData = {\"date_range\": {\"start\": \"2026-01-01\", \"end\": \"2026-03-01\"}, \"key_metrics\": {\"total_visitors\": 1310, \"total_page_views\": 3000, \"total_conversions\": 137, \"conversion_rate\": 4.57, \"avg_session_duration\": 152.3}, \"funnel\": {\"Home\": {\"visits\": 282, \"conversions\": 11, \"conversion_rate\": 3.9}, \"Products\": {\"visits\": 330, \"conversions\": 11, \"conversion_rate\": 3.33}, \"Demo\": {\"visits\": 306, \"conversions\": 17, \"conversion_rate\": 5.56}, \"Signup\": {\"visits\": 317, \"conversions\": 13, \"conversion_rate\": 4.1}, \"Contact\": {\"visits\": 288, \"conversions\": 11, \"conversion_rate\": 3.82}}, \"traffic_sources\": {\"Direct\": 733, \"Google\": 402, \"Twitter\": 386, \"Facebook\": 378, \"Newsletter\": 374, \"LinkedIn\": 364, \"Bing\": 363}, \"device_breakdown\": {\"mobile\": 1024, \"desktop\": 1016, \"tablet\": 960}, \"daily_trends\": [{\"date\": \"2026-01-01\", \"page_views\": 60, \"unique_visitors\": 60, \"conversions\": 3}, {\"date\": \"2026-01-02\", \"page_views\": 53, \"unique_visitors\": 52, \"conversions\": 2}, {\"date\": \"2026-01-03\", \"page_views\": 53, \"unique_visitors\": 52, \"conversions\": 2}, {\"date\": \"2026-01-04\", \"page_views\": 54, \"unique_visitors\": 54, \"conversions\": 1}, {\"date\": \"2026-01-05\", \"page_views\": 55, \"unique_visitors\": 55, \"conversions\": 1}, {\"date\": \"2026-01-06\", \"page_views\": 51, \"unique_visitors\": 50, \"conversions\": 4}, {\"date\": \"2026-01-07\", \"page_views\": 43, \"unique_visitors\": 43, \"conversions\": 1}, {\"date\": \"2026-01-08\", \"page_views\": 46, \"unique_visitors\": 46, \"conversions\": 5}, {\"date\": \"2026-01-09\", \"page_views\": 57, \"unique_visitors\": 56, \"conversions\": 0}, {\"date\": \"2026-01-10\", \"page_views\": 57, \"unique_visitors\": 56, \"conversions\": 2}, {\"date\": \"2026-01-11\", \"page_views\": 45, \"unique_visitors\": 45, \"conversions\": 1}, {\"date\": \"2026-01-12\", \"page_views\": 47, \"unique_visitors\": 46, \"conversions\": 2}, {\"date\": \"2026-01-13\", \"page_views\": 43, \"unique_visitors\": 42, \"conversions\": 3}, {\"date\": \"2026-01-14\", \"page_views\": 58, \"unique_visitors\": 56, \"conversions\": 0}, {\"date\": \"2026-01-15\", \"page_views\": 34, \"unique_visitors\": 34, \"conversions\": 0}, {\"date\": \"2026-01-16\", \"page_views\": 56, \"unique_visitors\": 55, \"conversions\": 7}, {\"date\": \"2026-01-17\", \"page_views\": 62, \"unique_visitors\": 62, \"conversions\": 3}, {\"date\": \"2026-01-18\", \"page_views\": 54, \"unique_visitors\": 53, \"conversions\": 0}, {\"date\": \"2026-01-19\", \"page_views\": 44, \"unique_visitors\": 43, \"conversions\": 2}, {\"date\": \"2026-01-20\", \"page_views\": 60, \"unique_visitors\": 59, \"conversions\": 2}, {\"date\": \"2026-01-21\", \"page_views\": 34, \"unique_visitors\": 34, \"conversions\": 1}, {\"date\": \"2026-01-22\", \"page_views\": 50, \"unique_visitors\": 48, \"conversions\": 2}, {\"date\": \"2026-01-23\", \"page_views\": 41, \"unique_visitors\": 41, \"conversions\": 2}, {\"date\": \"2026-01-24\", \"page_views\": 47, \"unique_visitors\": 46, \"conversions\": 2}, {\"date\": \"2026-01-25\", \"page_views\": 43, \"unique_visitors\": 43, \"conversions\": 3}, {\"date\": \"2026-01-26\", \"page_views\": 48, \"unique_visitors\": 48, \"conversions\": 3}, {\"date\": \"2026-01-27\", \"page_views\": 52, \"unique_visitors\": 50, \"conversions\": 5}, {\"date\": \"2026-01-28\", \"page_views\": 49, \"unique_visitors\": 49, \"conversions\": 3}, {\"date\": \"2026-01-29\", \"page_views\": 53, \"unique_visitors\": 53, \"conversions\": 4}, {\"date\": \"2026-01-30\", \"page_views\": 34, \"unique_visitors\": 34, \"conversions\": 1}, {\"date\": \"2026-01-31\", \"page_views\": 45, \"unique_visitors\": 44, \"conversions\": 3}, {\"date\": \"2026-02-01\", \"page_views\": 41, \"unique_visitors\": 41, \"conversions\": 3}, {\"date\": \"2026-02-02\", \"page_views\": 50, \"unique_visitors\": 50, \"conversions\": 5}, {\"date\": \"2026-02-03\", \"page_views\": 43, \"unique_visitors\": 41, \"conversions\": 3}, {\"date\": \"2026-02-04\", \"page_views\": 47, \"unique_visitors\": 45, \"conversions\": 2}, {\"date\": \"2026-02-05\", \"page_views\": 50, \"unique_visitors\": 49, \"conversions\": 5}, {\"date\": \"2026-02-06\", \"page_views\": 56, \"unique_visitors\": 54, \"conversions\": 2}, {\"date\": \"2026-02-07\", \"page_views\": 52, \"unique_visitors\": 51, \"conversions\": 3}, {\"date\": \"2026-02-08\", \"page_views\": 50, \"unique_visitors\": 49, \"conversions\": 3}, {\"date\": \"2026-02-09\", \"page_views\": 54, \"unique_visitors\": 54, \"conversions\": 2}, {\"date\": \"2026-02-10\", \"page_views\": 45, \"unique_visitors\": 45, \"conversions\": 3}, {\"date\": \"2026-02-11\", \"page_views\": 52, \"unique_visitors\": 51, \"conversions\": 1}, {\"date\": \"2026-02-12\", \"page_views\": 56, \"unique_visitors\": 54, \"conversions\": 5}, {\"date\": \"2026-02-13\", \"page_views\": 53, \"unique_visitors\": 53, \"conversions\": 1}, {\"date\": \"2026-02-14\", \"page_views\": 62, \"unique_visitors\": 62, \"conversions\": 0}, {\"date\": \"2026-02-15\", \"page_views\": 48, \"unique_visitors\": 47, \"conversions\": 1}, {\"date\": \"2026-02-16\", \"page_views\": 60, \"unique_visitors\": 58, \"conversions\": 0}, {\"date\": \"2026-02-17\", \"page_views\": 67, \"unique_visitors\": 66, \"conversions\": 6}, {\"date\": \"2026-02-18\", \"page_views\": 69, \"unique_visitors\": 66, \"conversions\": 3}, {\"date\": \"2026-02-19\", \"page_views\": 36, \"unique_visitors\": 34, \"conversions\": 1}, {\"date\": \"2026-02-20\", \"page_views\": 50, \"unique_visitors\": 49, \"conversions\": 0}, {\"date\": \"2026-02-21\", \"page_views\": 47, \"unique_visitors\": 47, \"conversions\": 1}, {\"date\": \"2026-02-22\", \"page_views\": 52, \"unique_visitors\": 51, \"conversions\": 3}, {\"date\": \"2026-02-23\", \"page_views\": 49, \"unique_visitors\": 48, \"conversions\": 3}, {\"date\": \"2026-02-24\", \"page_views\": 43, \"unique_visitors\": 43, \"conversions\": 0}, {\"date\": \"2026-02-25\", \"page_views\": 45, \"unique_visitors\": 45, \"conversions\": 3}, {\"date\": \"2026-02-26\", \"page_views\": 47, \"unique_visitors\": 47, \"conversions\": 0}, {\"date\": \"2026-02-27\", \"page_views\": 41, \"unique_visitors\": 39, \"conversions\": 1}, {\"date\": \"2026-02-28\", \"page_views\": 52, \"unique_visitors\": 52, \"conversions\": 4}, {\"date\": \"2026-03-01\", \"page_views\": 55, \"unique_visitors\": 55, \"conversions\": 3}], \"page_performance\": [{\"page\": \"Pricing\", \"views\": 333, \"unique_visitors\": 299, \"conversions\": 18, \"avg_time\": 148.5}, {\"page\": \"Products\", \"views\": 330, \"unique_visitors\": 297, \"conversions\": 11, \"avg_time\": 151.3}, {\"page\": \"Signup\", \"views\": 317, \"unique_visitors\": 292, \"conversions\": 13, \"avg_time\": 145.1}, {\"page\": \"Demo\", \"views\": 306, \"unique_visitors\": 281, \"conversions\": 17, \"avg_time\": 152.2}, {\"page\": \"Support\", \"views\": 293, \"unique_visitors\": 272, \"conversions\": 15, \"avg_time\": 157.6}, {\"page\": \"Docs\", \"views\": 290, \"unique_visitors\": 264, \"conversions\": 11, \"avg_time\": 155.2}, {\"page\": \"Contact\", \"views\": 288, \"unique_visitors\": 257, \"conversions\": 11, \"avg_time\": 152.4}, {\"page\": \"Blog\", \"views\": 285, \"unique_visitors\": 259, \"conversions\": 19, \"avg_time\": 153.3}, {\"page\": \"Home\", \"views\": 282, \"unique_visitors\": 261, \"conversions\": 11, \"avg_time\": 156.8}, {\"page\": \"About\", \"views\": 276, \"unique_visitors\": 250, \"conversions\": 11, \"avg_time\": 151.7}], \"hourly_pattern\": [{\"hour\": 0, \"page_views\": 89, \"visitors\": 84}, {\"hour\": 1, \"page_views\": 116, \"visitors\": 113}, {\"hour\": 2, \"page_views\": 129, \"visitors\": 121}, {\"hour\": 3, \"page_views\": 148, \"visitors\": 143}, {\"hour\": 4, \"page_views\": 120, \"visitors\": 117}, {\"hour\": 5, \"page_views\": 120, \"visitors\": 117}, {\"hour\": 6, \"page_views\": 114, \"visitors\": 112}, {\"hour\": 7, \"page_views\": 127, \"visitors\": 121}, {\"hour\": 8, \"page_views\": 122, \"visitors\": 119}, {\"hour\": 9, \"page_views\": 134, \"visitors\": 126}, {\"hour\": 10, \"page_views\": 141, \"visitors\": 130}, {\"hour\": 11, \"page_views\": 124, \"visitors\": 118}, {\"hour\": 12, \"page_views\": 104, \"visitors\": 103}, {\"hour\": 13, \"page_views\": 133, \"visitors\": 128}, {\"hour\": 14, \"page_views\": 125, \"visitors\": 123}, {\"hour\": 15, \"page_views\": 140, \"visitors\": 131}, {\"hour\": 16, \"page_views\": 122, \"visitors\": 117}, {\"hour\": 17, \"page_views\": 126, \"visitors\": 120}, {\"hour\": 18, \"page_views\": 159, \"visitors\": 151}, {\"hour\": 19, \"page_views\": 124, \"visitors\": 119}, {\"hour\": 20, \"page_views\": 111, \"visitors\": 107}, {\"hour\": 21, \"page_views\": 125, \"visitors\": 120}, {\"hour\": 22, \"page_views\": 125, \"visitors\": 123}, {\"hour\": 23, \"page_views\": 122, \"visitors\": 117}]};\n\n        // Color scheme\n        const colors = {\n            primary: '#2563eb',\n            secondary: '#7c3aed',\n            accent: '#059669',\n            warning: '#d97706',\n            lightBg: '#f1f5f9',\n            border: '#e2e8f0'\n        };\n\n        // Chart layout defaults\n        const layoutDefaults = {\n            paper_bgcolor: 'rgba(0,0,0,0)',\n            plot_bgcolor: 'rgba(0,0,0,0)',\n            font: { family: \"'Inter', 'Segoe UI', system-ui, sans-serif\", size: 12, color: '#475569' },\n            margin: { l: 60, r: 20, t: 20, b: 50 },\n            showlegend: true,\n            hovermode: 'closest'\n        };\n\n        // ==================== CONVERSION FUNNEL ====================\n        (function() {\n            const funnel = dashboardData.funnel;\n            const steps = Object.keys(funnel);\n            const visits = steps.map(s => funnel[s].visits);\n            const conversions = steps.map(s => funnel[s].conversions);\n            const conversionRates = steps.map(s => funnel[s].conversion_rate);\n\n            const trace1 = {\n                x: steps,\n                y: visits,\n                type: 'bar',\n                name: 'Total Visits',\n                marker: { color: colors.primary },\n                hovertemplate: '<b>%{x}</b><br>Visits: %{y}<extra></extra>'\n            };\n\n            const trace2 = {\n                x: steps,\n                y: conversions,\n                type: 'bar',\n                name: 'Conversions',\n                marker: { color: colors.accent },\n                hovertemplate: '<b>%{x}</b><br>Conversions: %{y}<extra></extra>'\n            };\n\n            const layout = Object.assign({}, layoutDefaults, {\n                title: '',\n                barmode: 'group',\n                xaxis: { title: '', showgrid: false },\n                yaxis: { title: 'Count', showgrid: true, gridcolor: colors.border },\n                margin: { l: 60, r: 20, t: 20, b: 60 }\n            });\n\n            Plotly.newPlot('funnel-chart', [trace1, trace2], layout, { responsive: true });\n        })();\n\n        // ==================== TRAFFIC SOURCES ====================\n        (function() {\n            const sources = dashboardData.traffic_sources;\n            const labels = Object.keys(sources);\n            const values = Object.values(sources);\n\n            const trace = {\n                labels: labels,\n                values: values,\n                type: 'pie',\n                marker: { \n                    colors: ['#2563eb', '#7c3aed', '#059669', '#d97706', '#ec4899', '#0891b2', '#f59e0b']\n                },\n                hovertemplate: '<b>%{label}</b><br>Visitors: %{value}<br>Percentage: %{percent}<extra></extra>',\n                textposition: 'inside',\n                textinfo: 'label+percent'\n            };\n\n            const layout = Object.assign({}, layoutDefaults, {\n                title: '',\n                margin: { l: 0, r: 0, t: 0, b: 0 }\n            });\n\n            Plotly.newPlot('sources-chart', [trace], layout, { responsive: true });\n        })();\n\n        // ==================== DEVICE BREAKDOWN ====================\n        (function() {\n            const devices = dashboardData.device_breakdown;\n            const labels = Object.keys(devices).map(d => d.charAt(0).toUpperCase() + d.slice(1));\n            const values = Object.values(devices);\n\n            const trace = {\n                labels: labels,\n                values: values,\n                type: 'doughnut',\n                marker: { \n                    colors: ['#2563eb', '#7c3aed', '#059669']\n                },\n                hole: 0.4,\n                hovertemplate: '<b>%{label}</b><br>Visitors: %{value}<br>Percentage: %{percent}<extra></extra>',\n                textposition: 'inside',\n                textinfo: 'label+percent'\n            };\n\n            const layout = Object.assign({}, layoutDefaults, {\n                title: '',\n                margin: { l: 0, r: 0, t: 0, b: 0 }\n            });\n\n            Plotly.newPlot('device-chart', [trace], layout, { responsive: true });\n        })();\n\n        // ==================== DAILY TRENDS ====================\n        (function() {\n            const daily = dashboardData.daily_trends;\n            const dates = daily.map(d => d.date);\n            const pageViews = daily.map(d => d.page_views);\n            const visitors = daily.map(d => d.unique_visitors);\n            const conversions = daily.map(d => d.conversions);\n\n            const trace1 = {\n                x: dates,\n                y: pageViews,\n                type: 'scatter',\n                mode: 'lines',\n                name: 'Page Views',\n                line: { color: colors.primary, width: 2 },\n                fill: 'tonexty',\n                hovertemplate: '<b>%{x}</b><br>Page Views: %{y}<extra></extra>'\n            };\n\n            const trace2 = {\n                x: dates,\n                y: visitors,\n                type: 'scatter',\n                mode: 'lines',\n                name: 'Unique Visitors',\n                line: { color: colors.secondary, width: 2 },\n                hovertemplate: '<b>%{x}</b><br>Visitors: %{y}<extra></extra>'\n            };\n\n            const trace3 = {\n                x: dates,\n                y: conversions,\n                type: 'scatter',\n                mode: 'lines+markers',\n                name: 'Conversions',\n                line: { color: colors.accent, width: 2 },\n                marker: { size: 5 },\n                hovertemplate: '<b>%{x}</b><br>Conversions: %{y}<extra></extra>'\n            };\n\n            const layout = Object.assign({}, layoutDefaults, {\n                title: '',\n                xaxis: { title: 'Date', showgrid: true, gridcolor: colors.border },\n                yaxis: { title: 'Count', showgrid: true, gridcolor: colors.border },\n                margin: { l: 60, r: 20, t: 20, b: 60 }\n            });\n\n            Plotly.newPlot('daily-chart', [trace1, trace2, trace3], layout, { responsive: true });\n        })();\n\n        // ==================== HOURLY PATTERN ====================\n        (function() {\n            const hourly = dashboardData.hourly_pattern;\n            const hours = hourly.map((d, i) => i + ':00');\n            const pageViews = hourly.map(d => d.page_views);\n\n            const trace = {\n                x: hours,\n                y: pageViews,\n                type: 'bar',\n                marker: { color: colors.primary },\n                hovertemplate: '<b>Hour: %{x}</b><br>Page Views: %{y}<extra></extra>'\n            };\n\n            const layout = Object.assign({}, layoutDefaults, {\n                title: '',\n                xaxis: { title: 'Hour of Day', showgrid: false },\n                yaxis: { title: 'Page Views', showgrid: true, gridcolor: colors.border },\n                margin: { l: 60, r: 20, t: 20, b: 60 }\n            });\n\n            Plotly.newPlot('hourly-chart', [trace], layout, { responsive: true });\n        })();\n\n        // ==================== TOP PAGES ====================\n        (function() {\n            const pages = dashboardData.page_performance;\n            const pageNames = pages.map(p => p.page);\n            const views = pages.map(p => p.views);\n            const conversions = pages.map(p => p.conversions);\n\n            const trace1 = {\n                y: pageNames,\n                x: views,\n                type: 'bar',\n                orientation: 'h',\n                name: 'Views',\n                marker: { color: colors.primary },\n                hovertemplate: '<b>%{y}</b><br>Views: %{x}<extra></extra>'\n            };\n\n            const trace2 = {\n                y: pageNames,\n                x: conversions,\n                type: 'bar',\n                orientation: 'h',\n                name: 'Conversions',\n                marker: { color: colors.accent },\n                hovertemplate: '<b>%{y}</b><br>Conversions: %{x}<extra></extra>'\n            };\n\n            const layout = Object.assign({}, layoutDefaults, {\n                title: '',\n                barmode: 'group',\n                xaxis: { title: 'Count', showgrid: true, gridcolor: colors.border },\n                yaxis: { title: '', showgrid: false },\n                margin: { l: 120, r: 20, t: 20, b: 50 }\n            });\n\n            Plotly.newPlot('pages-chart', [trace1, trace2], layout, { responsive: true });\n        })();\n    </script>\n</body>\n</html>\n"}], "grading": {"eval_id": "eval-2-saas-conversion", "run_type": "with_skill", "expectations": [{"text": "Output is a single self-contained HTML file", "passed": true, "evidence": "Found HTML file: dashboard.html (23451 chars)"}, {"text": "Dashboard uses Plotly.js", "passed": true, "evidence": "Plotly.js reference found"}, {"text": "Conversion funnel visualization", "passed": true, "evidence": "Conversion funnel found"}, {"text": "Traffic source breakdown", "passed": true, "evidence": "Traffic sources section found"}, {"text": "Device type distribution", "passed": true, "evidence": "Device breakdown found"}, {"text": "Daily traffic trend chart", "passed": true, "evidence": "Daily trends chart found"}, {"text": "KPI summary cards", "passed": true, "evidence": "KPI/metric card elements found"}, {"text": "Professional appearance", "passed": true, "evidence": "Subjective - requires human evaluation"}]}}, {"id": "eval-2-saas-conversion-without_skill", "prompt": "Here's a CSV of our SaaS product's web analytics for Jan-Feb 2026. I need a dashboard that shows our conversion funnel, traffic sources, device breakdown, and daily trends. Make it look professional.", "eval_id": 2, "outputs": [{"name": "saas_analytics_dashboard.html", "type": "text", "content": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>SaaS Analytics Dashboard</title>\n    <script src=\"https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js\"></script>\n    <style>\n        * {\n            margin: 0;\n            padding: 0;\n            box-sizing: border-box;\n        }\n\n        body {\n            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;\n            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n            min-height: 100vh;\n            padding: 30px 20px;\n            color: #333;\n        }\n\n        .container {\n            max-width: 1400px;\n            margin: 0 auto;\n        }\n\n        header {\n            background: white;\n            padding: 30px;\n            border-radius: 12px;\n            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);\n            margin-bottom: 30px;\n        }\n\n        h1 {\n            font-size: 32px;\n            color: #667eea;\n            margin-bottom: 10px;\n        }\n\n        .date-range {\n            color: #666;\n            font-size: 14px;\n        }\n\n        .metrics-grid {\n            display: grid;\n            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));\n            gap: 20px;\n            margin-bottom: 30px;\n        }\n\n        .metric-card {\n            background: white;\n            padding: 25px;\n            border-radius: 12px;\n            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);\n            border-left: 4px solid #667eea;\n        }\n\n        .metric-label {\n            font-size: 12px;\n            text-transform: uppercase;\n            letter-spacing: 0.5px;\n            color: #999;\n            margin-bottom: 8px;\n            font-weight: 600;\n        }\n\n        .metric-value {\n            font-size: 28px;\n            font-weight: 700;\n            color: #667eea;\n            margin-bottom: 5px;\n        }\n\n        .metric-change {\n            font-size: 12px;\n            color: #666;\n        }\n\n        .charts-grid {\n            display: grid;\n            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));\n            gap: 30px;\n            margin-bottom: 30px;\n        }\n\n        .chart-container {\n            background: white;\n            padding: 25px;\n            border-radius: 12px;\n            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);\n        }\n\n        .chart-title {\n            font-size: 18px;\n            font-weight: 600;\n            color: #333;\n            margin-bottom: 20px;\n            display: flex;\n            align-items: center;\n        }\n\n        .chart-title::before {\n            content: '';\n            display: inline-block;\n            width: 4px;\n            height: 20px;\n            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n            margin-right: 12px;\n            border-radius: 2px;\n        }\n\n        canvas {\n            display: block !important;\n            max-height: 400px;\n        }\n\n        .full-width {\n            grid-column: 1 / -1;\n        }\n\n        .funnel-container {\n            background: white;\n            padding: 25px;\n            border-radius: 12px;\n            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);\n            margin-bottom: 30px;\n        }\n\n        .funnel-stage {\n            display: flex;\n            align-items: center;\n            margin-bottom: 20px;\n        }\n\n        .funnel-bar-container {\n            flex-grow: 1;\n            margin-right: 20px;\n        }\n\n        .funnel-bar {\n            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);\n            height: 40px;\n            border-radius: 6px;\n            display: flex;\n            align-items: center;\n            padding: 0 15px;\n            color: white;\n            font-weight: 600;\n            font-size: 14px;\n        }\n\n        .funnel-label {\n            min-width: 100px;\n            text-align: right;\n            font-weight: 600;\n            color: #333;\n            font-size: 14px;\n        }\n\n        .funnel-stats {\n            min-width: 120px;\n            text-align: right;\n        }\n\n        .funnel-count {\n            font-weight: 700;\n            color: #667eea;\n            font-size: 14px;\n        }\n\n        .funnel-conversion {\n            font-size: 12px;\n            color: #999;\n            margin-top: 2px;\n        }\n\n        .footer {\n            text-align: center;\n            color: white;\n            font-size: 12px;\n            margin-top: 30px;\n            opacity: 0.8;\n        }\n\n        @media (max-width: 768px) {\n            .charts-grid {\n                grid-template-columns: 1fr;\n            }\n\n            h1 {\n                font-size: 24px;\n            }\n\n            .metric-value {\n                font-size: 22px;\n            }\n        }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <header>\n            <h1>\ud83d\udcca SaaS Analytics Dashboard</h1>\n            <p class=\"date-range\">January - February 2026</p>\n        </header>\n\n        <div class=\"metrics-grid\">\n            <div class=\"metric-card\">\n                <div class=\"metric-label\">Total Sessions</div>\n                <div class=\"metric-value\" id=\"totalSessions\">0</div>\n                <div class=\"metric-change\">All recorded visits</div>\n            </div>\n            <div class=\"metric-card\">\n                <div class=\"metric-label\">Total Conversions</div>\n                <div class=\"metric-value\" id=\"totalConversions\">0</div>\n                <div class=\"metric-change\">Completed sign-ups</div>\n            </div>\n            <div class=\"metric-card\">\n                <div class=\"metric-label\">Conversion Rate</div>\n                <div class=\"metric-value\" id=\"conversionRate\">0%</div>\n                <div class=\"metric-change\">Jan-Feb average</div>\n            </div>\n            <div class=\"metric-card\">\n                <div class=\"metric-label\">Unique Visitors</div>\n                <div class=\"metric-value\" id=\"uniqueVisitors\">0</div>\n                <div class=\"metric-change\">Distinct visitors</div>\n            </div>\n        </div>\n\n        <div class=\"funnel-container\">\n            <h2 style=\"font-size: 18px; font-weight: 600; color: #333; margin-bottom: 25px; display: flex; align-items: center;\">\n                <span style=\"display: inline-block; width: 4px; height: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin-right: 12px; border-radius: 2px;\"></span>\n                Conversion Funnel\n            </h2>\n            <div id=\"funnelChart\"></div>\n        </div>\n\n        <div class=\"charts-grid\">\n            <div class=\"chart-container\">\n                <div class=\"chart-title\">Traffic Sources</div>\n                <canvas id=\"sourcesChart\"></canvas>\n            </div>\n            <div class=\"chart-container\">\n                <div class=\"chart-title\">Device Breakdown</div>\n                <canvas id=\"deviceChart\"></canvas>\n            </div>\n            <div class=\"chart-container full-width\">\n                <div class=\"chart-title\">Daily Trends</div>\n                <canvas id=\"trendsChart\"></canvas>\n            </div>\n        </div>\n\n        <div class=\"footer\">\n            Data represents Web Analytics for January-February 2026 | Dashboard generated automatically\n        </div>\n    </div>\n\n    <script>\n        // CSV Data Processing\n        const csvData = `timestamp,page,source,country,device,visitor_id,session_id,page_views,time_on_page_sec,is_conversion\n2026-02-10 03:01:00,Contact,linkedin.com,jpn,desktop,1209,45741,1,49,0\n2026-01-03 00:05:00,Blog,linkedin.com,bra,tablet,1054,46781,1,106,0\n2026-02-14 17:26:00,Blog,,kor,mobile,1013,20463,1,221,0\n2026-01-10 06:48:00,About,direct,gbr,mobile,1198,33526,1,181,0\n2026-02-21 01:46:00,Demo,direct,aus,desktop,2130,29213,1,190,0\n2026-02-15 02:02:00,Blog,facebook.com,gbr,desktop,1206,34911,1,147,0\n2026-02-23 11:10:00,About,bing,jpn,tablet,1546,14679,1,92,0\n2026-01-16 05:29:00,Signup,facebook.com,bra,desktop,2402,31252,1,33,0\n2026-01-03 10:25:00,Contact,direct,jpn,tablet,2470,30622,1,113,0\n2026-01-26 20:29:00,Pricing,facebook.com,deu,desktop,2149,45322,1,139,0\n2026-01-28 18:25:00,About,linkedin.com,deu,tablet,2010,15957,1,29,0\n2026-01-10 20:10:00,Signup,direct,aus,mobile,2220,40674,1,275,0\n2026-02-05 00:43:00,Products,facebook.com,can,desktop,1601,38492,1,85,0\n2026-02-16 23:16:00,Docs,twitter.com,bra,desktop,2280,29558,1,264,0\n2026-01-10 11:48:00,Pricing,google,kor,mobile,2000,11276,1,62,0\n2026-02-26 09:15:00,Home,linkedin.com,kor,desktop,1175,41849,1,40,0\n2026-02-04 04:08:00,Demo,twitter.com,ind,tablet,2242,37730,1,113,0\n2026-02-18 23:44:00,Blog,facebook.com,aus,tablet,2330,34472,1,229,0\n2026-01-29 03:15:00,Blog,direct,can,desktop,2204,46301,1,122,0\n2026-01-01 02:45:00,Home,linkedin.com,gbr,desktop,1676,14643,1,268,0\n2026-02-12 15:13:00,Docs,twitter.com,kor,tablet,1968,25925,1,247,0\n2026-01-13 03:06:00,Signup,bing,aus,mobile,1956,13550,1,55,0\n2026-02-16 10:51:00,Products,linkedin.com,jpn,desktop,2098,39400,1,76,0\n2026-01-18 14:15:00,Products,,bra,desktop,1103,45427,1,12,0\n2026-03-01 07:10:00,Signup,,fra,desktop,1821,13842,1,89,0\n2026-01-25 08:59:00,Demo,facebook.com,aus,tablet,2496,46422,1,254,0\n2026-01-19 06:03:00,Support,google,can,desktop,1102,48284,1,249,0\n2026-02-24 16:10:00,Home,direct,deu,desktop,2218,14453,1,125,0\n2026-02-26 18:15:00,Support,google,kor,desktop,1858,48251,1,294,0\n2026-03-01 08:13:00,About,linkedin.com,ind,mobile,1268,29660,1,239,0\n2026-02-18 02:00:00,Demo,direct,gbr,tablet,1436,43153,1,140,0\n2026-01-23 02:56:00,Blog,bing,ind,desktop,1897,45600,1,159,0\n2026-02-21 20:33:00,Home,facebook.com,gbr,desktop,1541,17564,1,59,0\n2026-01-10 08:18:00,Support,linkedin.com,can,desktop,2407,27300,1,263,0\n2026-02-27 01:05:00,Signup,facebook.com,usa,desktop,1683,18573,1,139,0\n2026-01-29 17:45:00,Signup,google,gbr,desktop,2415,19768,1,284,1\n2026-01-24 18:35:00,Pricing,newsletter,deu,desktop,1631,33897,1,25,0\n2026-01-14 21:15:00,Products,bing,bra,mobile,2271,20128,1,126,0\n2026-02-21 05:56:00,Signup,google,deu,tablet,1680,36982,1,132,0\n2026-02-20 22:06:00,Signup,google,fra,desktop,1408,40166,1,184,0\n2026-02-20 07:14:00,Home,linkedin.com,aus,mobile,1570,14549,1,147,0\n2026-02-02 12:43:00,Docs,bing,usa,desktop,1534,21702,1,140,1\n2026-02-08 13:22:00,About,newsletter,kor,tablet,1236,35244,1,300,0\n2026-01-03 22:27:00,Home,linkedin.com,can,mobile,1143,31639,1,165,0\n2026-01-08 23:57:00,Contact,facebook.com,aus,mobile,1824,29376,1,288,0\n2026-01-27 21:24:00,Pricing,facebook.com,aus,tablet,1000,29914,1,151,0\n2026-02-20 18:38:00,About,,fra,mobile,2383,24005,1,266,0\n2026-02-27 23:10:00,Products,facebook.com,bra,tablet,2296,31966,1,52,0\n2026-02-18 07:43:00,Contact,linkedin.com,jpn,desktop,1050,13028,1,130,0`;\n\n        function parseCSV(csvText) {\n            const lines = csvText.trim().split('\\n');\n            const headers = lines[0].split(',');\n            const data = [];\n            for (let i = 1; i < lines.length; i++) {\n                const row = lines[i].split(',');\n                const obj = {};\n                headers.forEach((header, index) => {\n                    obj[header] = row[index];\n                });\n                data.push(obj);\n            }\n            return data;\n        }\n\n        const analytics = parseCSV(csvData);\n\n        // Calculate metrics\n        const totalSessions = analytics.length;\n        const uniqueVisitors = new Set(analytics.map(d => d.visitor_id)).size;\n        const conversions = analytics.filter(d => d.is_conversion === '1').length;\n        const conversionRate = ((conversions / totalSessions) * 100).toFixed(1);\n\n        document.getElementById('totalSessions').textContent = totalSessions.toLocaleString();\n        document.getElementById('uniqueVisitors').textContent = uniqueVisitors.toLocaleString();\n        document.getElementById('totalConversions').textContent = conversions.toLocaleString();\n        document.getElementById('conversionRate').textContent = conversionRate + '%';\n\n        // Funnel Analysis\n        const pages = ['Home', 'Blog', 'Products', 'Pricing', 'Demo', 'Signup'];\n        const funnelData = {};\n        pages.forEach(page => {\n            funnelData[page] = analytics.filter(d => d.page === page).length;\n        });\n\n        function renderFunnel() {\n            let html = '';\n            let maxCount = Math.max(...pages.map(p => funnelData[p]));\n            pages.forEach((page, index) => {\n                const count = funnelData[page];\n                const percentage = ((count / maxCount) * 100).toFixed(0);\n                const convCount = analytics.filter(d => d.page === page && d.is_conversion === '1').length;\n                const convRate = ((convCount / count) * 100).toFixed(1);\n                html += `\n                    <div class=\"funnel-stage\">\n                        <div class=\"funnel-label\">${page}</div>\n                        <div class=\"funnel-bar-container\">\n                            <div class=\"funnel-bar\" style=\"width: ${percentage}%;\">\n                                ${count} visits\n                            </div>\n                        </div>\n                        <div class=\"funnel-stats\">\n                            <div class=\"funnel-count\">${convCount} conversions</div>\n                            <div class=\"funnel-conversion\">${convRate}% conversion</div>\n                        </div>\n                    </div>\n                `;\n            });\n            document.getElementById('funnelChart').innerHTML = html;\n        }\n        renderFunnel();\n\n        // Traffic Sources Chart\n        const sourceData = {};\n        analytics.forEach(d => {\n            const source = d.source || 'Direct';\n            sourceData[source] = (sourceData[source] || 0) + 1;\n        });\n\n        new Chart(document.getElementById('sourcesChart'), {\n            type: 'doughnut',\n            data: {\n                labels: Object.keys(sourceData).sort((a, b) => sourceData[b] - sourceData[a]),\n                datasets: [{\n                    data: Object.keys(sourceData).sort((a, b) => sourceData[b] - sourceData[a]).map(k => sourceData[k]),\n                    backgroundColor: [\n                        '#667eea',\n                        '#764ba2',\n                        '#f093fb',\n                        '#4facfe',\n                        '#00f2fe',\n                        '#43e97b',\n                        '#fa709a'\n                    ]\n                }]\n            },\n            options: {\n                responsive: true,\n                maintainAspectRatio: true,\n                plugins: {\n                    legend: {\n                        position: 'bottom',\n                        labels: { padding: 15, font: { size: 12 } }\n                    }\n                }\n            }\n        });\n\n        // Device Chart\n        const deviceData = {};\n        analytics.forEach(d => {\n            deviceData[d.device] = (deviceData[d.device] || 0) + 1;\n        });\n\n        new Chart(document.getElementById('deviceChart'), {\n            type: 'doughnut',\n            data: {\n                labels: Object.keys(deviceData),\n                datasets: [{\n                    data: Object.values(deviceData),\n                    backgroundColor: ['#667eea', '#764ba2', '#f093fb']\n                }]\n            },\n            options: {\n                responsive: true,\n                maintainAspectRatio: true,\n                plugins: {\n                    legend: {\n                        position: 'bottom',\n                        labels: { padding: 15, font: { size: 12 } }\n                    }\n                }\n            }\n        });\n\n        // Daily Trends Chart\n        const dateData = {};\n        analytics.forEach(d => {\n            const date = d.timestamp.split(' ')[0];\n            if (!dateData[date]) {\n                dateData[date] = { visits: 0, conversions: 0 };\n            }\n            dateData[date].visits++;\n            if (d.is_conversion === '1') dateData[date].conversions++;\n        });\n\n        const sortedDates = Object.keys(dateData).sort();\n        const visitsData = sortedDates.map(d => dateData[d].visits);\n        const conversionData = sortedDates.map(d => dateData[d].conversions);\n\n        new Chart(document.getElementById('trendsChart'), {\n            type: 'line',\n            data: {\n                labels: sortedDates,\n                datasets: [\n                    {\n                        label: 'Visits',\n                        data: visitsData,\n                        borderColor: '#667eea',\n                        backgroundColor: 'rgba(102, 126, 234, 0.05)',\n                        tension: 0.4,\n                        fill: true\n                    },\n                    {\n                        label: 'Conversions',\n                        data: conversionData,\n                        borderColor: '#764ba2',\n                        backgroundColor: 'rgba(118, 75, 162, 0.05)',\n                        tension: 0.4,\n                        fill: true\n                    }\n                ]\n            },\n            options: {\n                responsive: true,\n                interaction: { mode: 'index', intersect: false },\n                plugins: {\n                    legend: {\n                        labels: { padding: 15, font: { size: 12 } }\n                    }\n                },\n                scales: {\n                    y: {\n                        beginAtZero: true,\n                        ticks: { font: { size: 11 } }\n                    },\n                    x: {\n                        ticks: { font: { size: 10 } }\n                    }\n                }\n            }\n        });\n    </script>\n</body>\n</html>\n"}], "grading": {"eval_id": "eval-2-saas-conversion", "run_type": "without_skill", "expectations": [{"text": "Output is a single self-contained HTML file", "passed": true, "evidence": "Found HTML file: saas_analytics_dashboard.html (17774 chars)"}, {"text": "Dashboard uses Plotly.js", "passed": false, "evidence": "No Plotly reference; may use Chart.js or other"}, {"text": "Conversion funnel visualization", "passed": true, "evidence": "Conversion funnel found"}, {"text": "Traffic source breakdown", "passed": true, "evidence": "Traffic sources section found"}, {"text": "Device type distribution", "passed": true, "evidence": "Device breakdown found"}, {"text": "Daily traffic trend chart", "passed": true, "evidence": "Daily trends chart found"}, {"text": "KPI summary cards", "passed": true, "evidence": "KPI/metric card elements found"}, {"text": "Professional appearance", "passed": true, "evidence": "Subjective - requires human evaluation"}]}}, {"id": "eval-3-time-patterns-with_skill", "prompt": "I've got website analytics in an Excel file. I want to understand our traffic by time of day and day of week \u2014 when are our peak hours? Also show me which site sections get the most engagement.", "eval_id": 3, "outputs": [{"name": "dashboard.html", "type": "text", "content": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Web Analytics Dashboard</title>\n    <script src=\"https://cdn.plot.ly/plotly-latest.min.js\"></script>\n    <style>\n        * {\n            margin: 0;\n            padding: 0;\n            box-sizing: border-box;\n        }\n        \n        body {\n            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;\n            background-color: #f8fafc;\n            color: #1e293b;\n            line-height: 1.6;\n        }\n        \n        .dashboard {\n            max-width: 1600px;\n            margin: 0 auto;\n            padding: 32px 24px;\n        }\n        \n        header {\n            margin-bottom: 48px;\n            background: white;\n            padding: 32px;\n            border-radius: 12px;\n            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);\n        }\n        \n        h1 {\n            font-size: 32px;\n            font-weight: 700;\n            margin-bottom: 8px;\n            color: #0f172a;\n        }\n        \n        .date-range {\n            font-size: 14px;\n            color: #64748b;\n            margin-bottom: 24px;\n        }\n        \n        .kpi-cards {\n            display: grid;\n            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));\n            gap: 20px;\n            margin-top: 24px;\n        }\n        \n        .kpi-card {\n            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);\n            border: 1px solid #e2e8f0;\n            border-radius: 8px;\n            padding: 20px;\n            text-align: center;\n        }\n        \n        .kpi-value {\n            font-size: 32px;\n            font-weight: 700;\n            color: #2563eb;\n            margin-bottom: 8px;\n        }\n        \n        .kpi-label {\n            font-size: 14px;\n            color: #64748b;\n            text-transform: uppercase;\n            letter-spacing: 0.5px;\n        }\n        \n        main {\n            display: grid;\n            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));\n            gap: 32px;\n            margin-bottom: 32px;\n        }\n        \n        .chart-card {\n            background: white;\n            border-radius: 12px;\n            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);\n            padding: 24px;\n            overflow: hidden;\n        }\n        \n        .chart-card h2 {\n            font-size: 18px;\n            font-weight: 600;\n            margin-bottom: 16px;\n            color: #1e293b;\n        }\n        \n        .chart-card.full-width {\n            grid-column: 1 / -1;\n        }\n        \n        .chart-container {\n            min-height: 400px;\n        }\n        \n        .section-description {\n            font-size: 12px;\n            color: #64748b;\n            margin-top: 12px;\n            padding-top: 12px;\n            border-top: 1px solid #e2e8f0;\n        }\n        \n        @media (max-width: 768px) {\n            main {\n                grid-template-columns: 1fr;\n            }\n            \n            .kpi-cards {\n                grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));\n            }\n            \n            h1 {\n                font-size: 24px;\n            }\n        }\n    </style>\n</head>\n<body>\n    <div class=\"dashboard\">\n        <header>\n            <h1>Web Analytics Dashboard</h1>\n            <div class=\"date-range\">Data from January 10, 2026 12:00 AM to 11:59 PM</div>\n            \n            <div class=\"kpi-cards\">\n                <div class=\"kpi-card\">\n                    <div class=\"kpi-value\">10,000</div>\n                    <div class=\"kpi-label\">Total Page Views</div>\n                </div>\n                <div class=\"kpi-card\">\n                    <div class=\"kpi-value\">5,337</div>\n                    <div class=\"kpi-label\">Unique Visitors</div>\n                </div>\n                <div class=\"kpi-card\">\n                    <div class=\"kpi-value\">1.9</div>\n                    <div class=\"kpi-label\">Avg. Session Pages</div>\n                </div>\n                <div class=\"kpi-card\">\n                    <div class=\"kpi-value\">10</div>\n                    <div class=\"kpi-label\">Max Visit Number</div>\n                </div>\n                <div class=\"kpi-card\">\n                    <div class=\"kpi-value\" style=\"color: #059669;\">AI Storage</div>\n                    <div class=\"kpi-label\">Top Section</div>\n                </div>\n            </div>\n        </header>\n        \n        <main>\n            <div class=\"chart-card full-width\">\n                <h2>Traffic by Hour of Day</h2>\n                <p class=\"section-description\">Identifies peak traffic hours to help understand when your site experiences the most engagement.</p>\n                <div class=\"chart-container\" id=\"hourChart\"></div>\n            </div>\n            \n            <div class=\"chart-card\">\n                <h2>Top Site Sections by Engagement</h2>\n                <p class=\"section-description\">Ranked by page views + unique visitor count. Shows which content areas drive the most engagement.</p>\n                <div class=\"chart-container\" id=\"sectionChart\"></div>\n            </div>\n            \n            <div class=\"chart-card\">\n                <h2>Top Pages</h2>\n                <p class=\"section-description\">Most visited pages on your site during the measurement period.</p>\n                <div class=\"chart-container\" id=\"pagesChart\"></div>\n            </div>\n            \n            <div class=\"chart-card full-width\">\n                <h2>Hourly Traffic Heatmap: Top 10 Site Sections</h2>\n                <p class=\"section-description\">Shows traffic intensity by hour for your most popular site sections. Darker colors indicate more traffic.</p>\n                <div class=\"chart-container\" id=\"heatmapChart\"></div>\n            </div>\n            \n            <div class=\"chart-card\">\n                <h2>Top Referrer Sources</h2>\n                <p class=\"section-description\">Where your traffic originates. \"Direct / None\" includes direct visits and internal traffic.</p>\n                <div class=\"chart-container\" id=\"referrerChart\"></div>\n            </div>\n            \n            <div class=\"chart-card\">\n                <h2>Geographic Distribution</h2>\n                <p class=\"section-description\">Top 15 countries by page view volume during this period.</p>\n                <div class=\"chart-container\" id=\"geoChart\"></div>\n            </div>\n        </main>\n    </div>\n    \n    <script>\n        // Embedded aggregated data\n        const trafficByHour = [{\"hour\": 0, \"count\": 462}, {\"hour\": 1, \"count\": 261}, {\"hour\": 2, \"count\": 170}, {\"hour\": 3, \"count\": 315}, {\"hour\": 4, \"count\": 368}, {\"hour\": 5, \"count\": 324}, {\"hour\": 6, \"count\": 341}, {\"hour\": 7, \"count\": 415}, {\"hour\": 8, \"count\": 467}, {\"hour\": 9, \"count\": 694}, {\"hour\": 10, \"count\": 514}, {\"hour\": 11, \"count\": 454}, {\"hour\": 12, \"count\": 451}, {\"hour\": 13, \"count\": 597}, {\"hour\": 14, \"count\": 627}, {\"hour\": 15, \"count\": 598}, {\"hour\": 16, \"count\": 589}, {\"hour\": 17, \"count\": 615}, {\"hour\": 18, \"count\": 486}, {\"hour\": 19, \"count\": 279}, {\"hour\": 20, \"count\": 258}, {\"hour\": 21, \"count\": 252}, {\"hour\": 22, \"count\": 284}, {\"hour\": 23, \"count\": 179}];\n        const sectionEngagement = [{\"site_section\": \"ai storage\", \"page_views\": 3552, \"unique_visitors\": 2297, \"engagement_score\": 5849}, {\"site_section\": \"edge storage\", \"page_views\": 1189, \"unique_visitors\": 850, \"engagement_score\": 2039}, {\"site_section\": \"\\u6570\\u636e\\u4e2d\\u5fc3\", \"page_views\": 585, \"unique_visitors\": 581, \"engagement_score\": 1166}, {\"site_section\": \"solidigm data storage solutions\", \"page_views\": 555, \"unique_visitors\": 393, \"engagement_score\": 948}, {\"site_section\": \"\\u4e3b\\u9875\", \"page_views\": 461, \"unique_visitors\": 246, \"engagement_score\": 707}, {\"site_section\": \"d5-p5336\", \"page_views\": 387, \"unique_visitors\": 222, \"engagement_score\": 609}, {\"site_section\": \"search results page\", \"page_views\": 224, \"unique_visitors\": 207, \"engagement_score\": 431}, {\"site_section\": \"faqs\", \"page_views\": 197, \"unique_visitors\": 196, \"engagement_score\": 393}, {\"site_section\": \"\\u641c\\u7d22\\u7ed3\\u679c\\u9875\\u9762\", \"page_views\": 195, \"unique_visitors\": 191, \"engagement_score\": 386}, {\"site_section\": \"\\u5e38\\u89c1\\u95ee\\u9898\", \"page_views\": 190, \"unique_visitors\": 190, \"engagement_score\": 380}, {\"site_section\": \"data center\", \"page_views\": 162, \"unique_visitors\": 116, \"engagement_score\": 278}, {\"site_section\": \"solidigm storage tool\\u2122\", \"page_views\": 140, \"unique_visitors\": 64, \"engagement_score\": 204}, {\"site_section\": \"where to buy\", \"page_views\": 102, \"unique_visitors\": 54, \"engagement_score\": 156}, {\"site_section\": \"d7-ps1010\", \"page_views\": 92, \"unique_visitors\": 52, \"engagement_score\": 144}, {\"site_section\": \"job listings\", \"page_views\": 77, \"unique_visitors\": 60, \"engagement_score\": 137}];\n        const topPages = [{\"page_name\": \"ai storage\", \"count\": 3560}, {\"page_name\": \"edge storage\", \"count\": 1341}, {\"page_name\": \"\\u4e3b\\u9875\", \"count\": 1002}, {\"page_name\": \"solidigm data storage solutions\", \"count\": 631}, {\"page_name\": \"\\u6570\\u636e\\u4e2d\\u5fc3\", \"count\": 577}, {\"page_name\": \"d5-p5336\", \"count\": 419}, {\"page_name\": \"search results page\", \"count\": 362}, {\"page_name\": \"data center\", \"count\": 175}, {\"page_name\": \"secure erase\", \"count\": 163}, {\"page_name\": \"data storage optimized for the ai era\", \"count\": 157}, {\"page_name\": \"solidigm storage tool\\u2122\", \"count\": 96}, {\"page_name\": \"optimizing ai workloads with solidigm\\u2122 solid-state drives\", \"count\": 81}, {\"page_name\": \"the incredible power of power efficient storage: how modern ssds are transforming the data center\", \"count\": 74}, {\"page_name\": \"support (index - drivers & downloads)\", \"count\": 62}, {\"page_name\": \"solidigm synergy\\u2122 software and driver for client solid state drives\", \"count\": 49}];\n        const referrerData = [{\"referrer_domain\": \"google.com\", \"count\": 1351}, {\"referrer_domain\": \"playhop.com\", \"count\": 771}, {\"referrer_domain\": \"youtube.com\", \"count\": 454}, {\"referrer_domain\": \"doubleclick.net\", \"count\": 368}, {\"referrer_domain\": \"global-view.com\", \"count\": 352}, {\"referrer_domain\": \"bing.com\", \"count\": 196}, {\"referrer_domain\": \"googlesyndication.com\", \"count\": 194}, {\"referrer_domain\": \"sportspersia.com\", \"count\": 191}, {\"referrer_domain\": \"yahoo.com\", \"count\": 115}, {\"referrer_domain\": \"baidu.com\", \"count\": 58}];\n        const geoData = [{\"country\": \"usa\", \"count\": 7007}, {\"country\": \"jpn\", \"count\": 506}, {\"country\": \"chn\", \"count\": 487}, {\"country\": \"hkg\", \"count\": 407}, {\"country\": \"deu\", \"count\": 310}, {\"country\": \"irl\", \"count\": 286}, {\"country\": \"gbr\", \"count\": 126}, {\"country\": \"kor\", \"count\": 115}, {\"country\": \"can\", \"count\": 112}, {\"country\": \"twn\", \"count\": 99}, {\"country\": \"ind\", \"count\": 78}, {\"country\": \"rus\", \"count\": 70}, {\"country\": \"mex\", \"count\": 55}, {\"country\": \"pol\", \"count\": 28}, {\"country\": \"vnm\", \"count\": 21}];\n        \n        // Chart 1: Traffic by Hour\n        const hourTrace = {\n            x: trafficByHour.map(d => d.hour + ':00'),\n            y: trafficByHour.map(d => d.count),\n            type: 'bar',\n            marker: {\n                color: trafficByHour.map((d, i) => {\n                    const maxCount = Math.max(...trafficByHour.map(x => x.count));\n                    const ratio = d.count / maxCount;\n                    if (ratio > 0.8) return '#059669';\n                    if (ratio > 0.6) return '#0891b2';\n                    if (ratio > 0.4) return '#2563eb';\n                    return '#7c3aed';\n                }),\n                line: {color: 'rgba(0,0,0,0.1)', width: 0.5}\n            },\n            text: trafficByHour.map(d => d.count),\n            textposition: 'outside',\n            hovertemplate: '<b>Hour: %{x}</b><br>Page Views: %{y}<extra></extra>'\n        };\n        \n        const hourLayout = {\n            title: '',\n            xaxis: {title: 'Hour of Day', gridcolor: '#e2e8f0'},\n            yaxis: {title: 'Page Views', gridcolor: '#e2e8f0'},\n            plot_bgcolor: 'rgba(248, 250, 252, 0.5)',\n            paper_bgcolor: 'white',\n            font: {family: \"'Inter', 'Segoe UI', system-ui, sans-serif\", color: '#1e293b'},\n            margin: {l: 50, r: 30, t: 20, b: 40},\n            hovermode: 'x unified'\n        };\n        \n        Plotly.newPlot('hourChart', [hourTrace], hourLayout, {responsive: true});\n        \n        // Chart 2: Top Site Sections\n        const sectionLabels = sectionEngagement.map(s => {\n            const label = s.site_section;\n            return label.length > 40 ? label.substring(0, 37) + '...' : label;\n        });\n        \n        const sectionTrace = {\n            y: sectionLabels,\n            x: sectionEngagement.map(d => d.engagement_score),\n            type: 'bar',\n            orientation: 'h',\n            marker: {\n                color: '#2563eb',\n                line: {color: 'rgba(0,0,0,0.1)', width: 0.5}\n            },\n            text: sectionEngagement.map(d => d.engagement_score),\n            textposition: 'outside',\n            hovertemplate: '<b>%{y}</b><br>Engagement Score: %{x}<extra></extra>'\n        };\n        \n        const sectionLayout = {\n            title: '',\n            xaxis: {title: 'Engagement Score (Views + Visitors)', gridcolor: '#e2e8f0'},\n            yaxis: {autorange: 'reversed'},\n            plot_bgcolor: 'rgba(248, 250, 252, 0.5)',\n            paper_bgcolor: 'white',\n            font: {family: \"'Inter', 'Segoe UI', system-ui, sans-serif\", color: '#1e293b'},\n            margin: {l: 300, r: 80, t: 20, b: 40},\n            height: 450\n        };\n        \n        Plotly.newPlot('sectionChart', [sectionTrace], sectionLayout, {responsive: true});\n        \n        // Chart 3: Top Pages\n        const pageLabels = topPages.map(p => {\n            const label = p.page_name;\n            return label.length > 35 ? label.substring(0, 32) + '...' : label;\n        });\n        \n        const pageTrace = {\n            y: pageLabels,\n            x: topPages.map(d => d.count),\n            type: 'bar',\n            orientation: 'h',\n            marker: {\n                color: '#7c3aed',\n                line: {color: 'rgba(0,0,0,0.1)', width: 0.5}\n            },\n            text: topPages.map(d => d.count),\n            textposition: 'outside',\n            hovertemplate: '<b>%{y}</b><br>Views: %{x}<extra></extra>'\n        };\n        \n        const pageLayout = {\n            title: '',\n            xaxis: {title: 'Page Views', gridcolor: '#e2e8f0'},\n            yaxis: {autorange: 'reversed'},\n            plot_bgcolor: 'rgba(248, 250, 252, 0.5)',\n            paper_bgcolor: 'white',\n            font: {family: \"'Inter', 'Segoe UI', system-ui, sans-serif\", color: '#1e293b'},\n            margin: {l: 300, r: 80, t: 20, b: 40},\n            height: 450\n        };\n        \n        Plotly.newPlot('pagesChart', [pageTrace], pageLayout, {responsive: true});\n        \n        // Chart 4: Heatmap\n        const allHours = Array.from({length: 24}, (_, i) => i);\n        const topSections = [\"ai storage\", \"edge storage\", \"\\u6570\\u636e\\u4e2d\\u5fc3\", \"solidigm data storage solutions\", \"\\u4e3b\\u9875\", \"d5-p5336\", \"search results page\", \"faqs\", \"\\u641c\\u7d22\\u7ed3\\u679c\\u9875\\u9762\", \"\\u5e38\\u89c1\\u95ee\\u9898\"];\n        \n        const heatmapZ = topSections.map(section => \n            allHours.map(hour => {\n                const entry = sectionEngagement.find(s => s.site_section === section);\n                // Create a simple heatmap: would need full hourly data\n                // For now, use a placeholder structure\n                return Math.floor(Math.random() * 50) + 20;\n            })\n        );\n        \n        const heatmapTrace = {\n            z: heatmapZ,\n            x: allHours.map(h => h + ':00'),\n            y: topSections.map(s => s.length > 30 ? s.substring(0, 27) + '...' : s),\n            type: 'heatmap',\n            colorscale: 'Blues',\n            hovertemplate: '<b>Hour: %{x}</b><br><b>Section: %{y}</b><br>Views: %{z}<extra></extra>'\n        };\n        \n        const heatmapLayout = {\n            title: '',\n            xaxis: {title: 'Hour of Day'},\n            yaxis: {title: 'Site Section'},\n            paper_bgcolor: 'white',\n            font: {family: \"'Inter', 'Segoe UI', system-ui, sans-serif\", color: '#1e293b'},\n            margin: {l: 250, r: 30, t: 20, b: 40},\n            height: 450\n        };\n        \n        Plotly.newPlot('heatmapChart', [heatmapTrace], heatmapLayout, {responsive: true});\n        \n        // Chart 5: Referrers (Bar chart)\n        const referrerLabels = referrerData.map(r => r.referrer_domain || 'Direct / None');\n        const referrerTrace = {\n            y: referrerLabels,\n            x: referrerData.map(d => d.count),\n            type: 'bar',\n            orientation: 'h',\n            marker: {\n                color: '#059669',\n                line: {color: 'rgba(0,0,0,0.1)', width: 0.5}\n            },\n            text: referrerData.map(d => d.count),\n            textposition: 'outside',\n            hovertemplate: '<b>%{y}</b><br>Visits: %{x}<extra></extra>'\n        };\n        \n        const referrerLayout = {\n            title: '',\n            xaxis: {title: 'Page Views', gridcolor: '#e2e8f0'},\n            yaxis: {autorange: 'reversed'},\n            plot_bgcolor: 'rgba(248, 250, 252, 0.5)',\n            paper_bgcolor: 'white',\n            font: {family: \"'Inter', 'Segoe UI', system-ui, sans-serif\", color: '#1e293b'},\n            margin: {l: 180, r: 80, t: 20, b: 40},\n            height: 380\n        };\n        \n        Plotly.newPlot('referrerChart', [referrerTrace], referrerLayout, {responsive: true});\n        \n        // Chart 6: Geographic Distribution\n        const geoLabels = geoData.map(g => g.country);\n        const geoTrace = {\n            y: geoLabels,\n            x: geoData.map(d => d.count),\n            type: 'bar',\n            orientation: 'h',\n            marker: {\n                color: '#d97706',\n                line: {color: 'rgba(0,0,0,0.1)', width: 0.5}\n            },\n            text: geoData.map(d => d.count),\n            textposition: 'outside',\n            hovertemplate: '<b>%{y}</b><br>Views: %{x}<extra></extra>'\n        };\n        \n        const geoLayout = {\n            title: '',\n            xaxis: {title: 'Page Views', gridcolor: '#e2e8f0'},\n            yaxis: {autorange: 'reversed'},\n            plot_bgcolor: 'rgba(248, 250, 252, 0.5)',\n            paper_bgcolor: 'white',\n            font: {family: \"'Inter', 'Segoe UI', system-ui, sans-serif\", color: '#1e293b'},\n            margin: {l: 120, r: 80, t: 20, b: 40},\n            height: 420\n        };\n        \n        Plotly.newPlot('geoChart', [geoTrace], geoLayout, {responsive: true});\n    </script>\n</body>\n</html>\n"}], "grading": {"eval_id": "eval-3-time-patterns", "run_type": "with_skill", "expectations": [{"text": "Output is a single self-contained HTML file", "passed": true, "evidence": "Found HTML file: dashboard.html (18762 chars)"}, {"text": "Dashboard uses Plotly.js", "passed": true, "evidence": "Plotly.js reference found"}, {"text": "Shows traffic by hour of day", "passed": true, "evidence": "Hourly pattern chart found"}, {"text": "Shows traffic by day of week", "passed": true, "evidence": "Day of week pattern found"}, {"text": "Shows site section engagement", "passed": true, "evidence": "Section engagement found"}, {"text": "KPI summary cards", "passed": true, "evidence": "KPI/metric card elements found"}, {"text": "Handles multilingual content", "passed": false, "evidence": "No multilingual content detected"}]}}, {"id": "eval-3-time-patterns-without_skill", "prompt": "I've got website analytics in an Excel file. I want to understand our traffic by time of day and day of week \u2014 when are our peak hours? Also show me which site sections get the most engagement.", "eval_id": 3, "outputs": [{"name": "analytics-dashboard.html", "type": "text", "content": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Website Analytics Dashboard</title>\n    <script src=\"https://cdn.jsdelivr.net/npm/chart.js\"></script>\n    <style>\n        * {\n            margin: 0;\n            padding: 0;\n            box-sizing: border-box;\n        }\n        \n        body {\n            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;\n            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n            color: #333;\n            min-height: 100vh;\n            padding: 20px;\n        }\n        \n        .container {\n            max-width: 1400px;\n            margin: 0 auto;\n        }\n        \n        header {\n            background: white;\n            padding: 30px;\n            border-radius: 10px;\n            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);\n            margin-bottom: 30px;\n        }\n        \n        h1 {\n            color: #667eea;\n            margin-bottom: 10px;\n        }\n        \n        .summary-stats {\n            display: grid;\n            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));\n            gap: 20px;\n            margin-top: 20px;\n        }\n        \n        .stat-card {\n            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n            color: white;\n            padding: 20px;\n            border-radius: 8px;\n            text-align: center;\n        }\n        \n        .stat-value {\n            font-size: 32px;\n            font-weight: bold;\n            margin: 10px 0;\n        }\n        \n        .stat-label {\n            font-size: 14px;\n            opacity: 0.9;\n        }\n        \n        .charts-container {\n            display: grid;\n            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));\n            gap: 30px;\n            margin-bottom: 30px;\n        }\n        \n        .chart-card {\n            background: white;\n            padding: 25px;\n            border-radius: 10px;\n            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);\n        }\n        \n        .chart-card h2 {\n            color: #667eea;\n            font-size: 18px;\n            margin-bottom: 20px;\n            border-bottom: 2px solid #667eea;\n            padding-bottom: 10px;\n        }\n        \n        .chart-wrapper {\n            position: relative;\n            height: 300px;\n        }\n        \n        .table-card {\n            background: white;\n            padding: 25px;\n            border-radius: 10px;\n            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);\n            grid-column: 1 / -1;\n        }\n        \n        .table-card h2 {\n            color: #667eea;\n            font-size: 18px;\n            margin-bottom: 20px;\n            border-bottom: 2px solid #667eea;\n            padding-bottom: 10px;\n        }\n        \n        table {\n            width: 100%;\n            border-collapse: collapse;\n        }\n        \n        th {\n            background: #f5f7fa;\n            color: #667eea;\n            padding: 12px;\n            text-align: left;\n            font-weight: 600;\n            border-bottom: 2px solid #667eea;\n        }\n        \n        td {\n            padding: 12px;\n            border-bottom: 1px solid #e0e0e0;\n        }\n        \n        tr:hover {\n            background: #f5f7fa;\n        }\n        \n        .rank {\n            font-weight: bold;\n            color: #667eea;\n            width: 50px;\n        }\n        \n        .section-name {\n            font-weight: 500;\n            color: #333;\n        }\n        \n        footer {\n            text-align: center;\n            color: white;\n            margin-top: 30px;\n            opacity: 0.9;\n        }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <header>\n            <h1>Website Analytics Dashboard</h1>\n            <p>Traffic patterns and site section engagement analysis</p>\n            \n            <div class=\"summary-stats\">\n                <div class=\"stat-card\">\n                    <div class=\"stat-label\">Total Hits</div>\n                    <div class=\"stat-value\">10,000</div>\n                </div>\n                <div class=\"stat-card\">\n                    <div class=\"stat-label\">Unique Visitors</div>\n                    <div class=\"stat-value\">5,337</div>\n                </div>\n                <div class=\"stat-card\">\n                    <div class=\"stat-label\">Peak Hour</div>\n                    <div class=\"stat-value\">9:00</div>\n                </div>\n                <div class=\"stat-card\">\n                    <div class=\"stat-label\">Site Sections</div>\n                    <div class=\"stat-value\">364</div>\n                </div>\n            </div>\n        </header>\n        \n        <div class=\"charts-container\">\n            <div class=\"chart-card\">\n                <h2>Traffic by Hour of Day</h2>\n                <div class=\"chart-wrapper\">\n                    <canvas id=\"trafficByHourChart\"></canvas>\n                </div>\n            </div>\n            \n            <div class=\"chart-card\">\n                <h2>Traffic by Day of Week</h2>\n                <div class=\"chart-wrapper\">\n                    <canvas id=\"trafficByDayChart\"></canvas>\n                </div>\n            </div>\n        </div>\n        \n        <div class=\"table-card\">\n            <h2>Top Site Sections by Engagement</h2>\n            <table>\n                <thead>\n                    <tr>\n                        <th class=\"rank\">Rank</th>\n                        <th>Site Section</th>\n                        <th>Page Views</th>\n                        <th>Unique Visitors</th>\n                        <th>Total Hits</th>\n                    </tr>\n                </thead>\n                <tbody>\n                    <tr>\n                        <td class=\"rank\">#1</td>\n                        <td class=\"section-name\">ai storage</td>\n                        <td>3552</td>\n                        <td>2297</td>\n                        <td>3552</td>\n                    </tr>\n                    <tr>\n                        <td class=\"rank\">#2</td>\n                        <td class=\"section-name\">edge storage</td>\n                        <td>1189</td>\n                        <td>850</td>\n                        <td>1189</td>\n                    </tr>\n                    <tr>\n                        <td class=\"rank\">#3</td>\n                        <td class=\"section-name\">\u6570\u636e\u4e2d\u5fc3</td>\n                        <td>585</td>\n                        <td>581</td>\n                        <td>585</td>\n                    </tr>\n                    <tr>\n                        <td class=\"rank\">#4</td>\n                        <td class=\"section-name\">solidigm data storage solutions</td>\n                        <td>555</td>\n                        <td>393</td>\n                        <td>555</td>\n                    </tr>\n                    <tr>\n                        <td class=\"rank\">#5</td>\n                        <td class=\"section-name\">\u4e3b\u9875</td>\n                        <td>461</td>\n                        <td>246</td>\n                        <td>461</td>\n                    </tr>\n                    <tr>\n                        <td class=\"rank\">#6</td>\n                        <td class=\"section-name\">d5-p5336</td>\n                        <td>387</td>\n                        <td>222</td>\n                        <td>387</td>\n                    </tr>\n                    <tr>\n                        <td class=\"rank\">#7</td>\n                        <td class=\"section-name\">search results page</td>\n                        <td>224</td>\n                        <td>207</td>\n                        <td>224</td>\n                    </tr>\n                    <tr>\n                        <td class=\"rank\">#8</td>\n                        <td class=\"section-name\">faqs</td>\n                        <td>197</td>\n                        <td>196</td>\n                        <td>197</td>\n                    </tr>\n                    <tr>\n                        <td class=\"rank\">#9</td>\n                        <td class=\"section-name\">\u641c\u7d22\u7ed3\u679c\u9875\u9762</td>\n                        <td>195</td>\n                        <td>191</td>\n                        <td>195</td>\n                    </tr>\n                    <tr>\n                        <td class=\"rank\">#10</td>\n                        <td class=\"section-name\">\u5e38\u89c1\u95ee\u9898</td>\n                        <td>190</td>\n                        <td>190</td>\n                        <td>190</td>\n                    </tr>\n                    <tr>\n                        <td class=\"rank\">#11</td>\n                        <td class=\"section-name\">data center</td>\n                        <td>162</td>\n                        <td>116</td>\n                        <td>162</td>\n                    </tr>\n                    <tr>\n                        <td class=\"rank\">#12</td>\n                        <td class=\"section-name\">solidigm storage tool\u2122</td>\n                        <td>140</td>\n                        <td>64</td>\n                        <td>140</td>\n                    </tr>\n                    <tr>\n                        <td class=\"rank\">#13</td>\n                        <td class=\"section-name\">where to buy</td>\n                        <td>102</td>\n                        <td>54</td>\n                        <td>102</td>\n                    </tr>\n                    <tr>\n                        <td class=\"rank\">#14</td>\n                        <td class=\"section-name\">d7-ps1010</td>\n                        <td>92</td>\n                        <td>52</td>\n                        <td>92</td>\n                    </tr>\n                    <tr>\n                        <td class=\"rank\">#15</td>\n                        <td class=\"section-name\">solidigm synergy\u2122 software and driver for client solid state drives</td>\n                        <td>80</td>\n                        <td>37</td>\n                        <td>80</td>\n                    </tr>\n                </tbody>\n            </table>\n        </div>\n    </div>\n    \n    <footer>\n        <p>Analytics Dashboard Generated on 2026-03-18</p>\n    </footer>\n    \n    <script>\n        // Traffic by Hour Chart\n        const hourCtx = document.getElementById('trafficByHourChart').getContext('2d');\n        const hourData = [{\"hour\": 0, \"count\": 462}, {\"hour\": 1, \"count\": 261}, {\"hour\": 2, \"count\": 170}, {\"hour\": 3, \"count\": 315}, {\"hour\": 4, \"count\": 368}, {\"hour\": 5, \"count\": 324}, {\"hour\": 6, \"count\": 341}, {\"hour\": 7, \"count\": 415}, {\"hour\": 8, \"count\": 467}, {\"hour\": 9, \"count\": 694}, {\"hour\": 10, \"count\": 514}, {\"hour\": 11, \"count\": 454}, {\"hour\": 12, \"count\": 451}, {\"hour\": 13, \"count\": 597}, {\"hour\": 14, \"count\": 627}, {\"hour\": 15, \"count\": 598}, {\"hour\": 16, \"count\": 589}, {\"hour\": 17, \"count\": 615}, {\"hour\": 18, \"count\": 486}, {\"hour\": 19, \"count\": 279}, {\"hour\": 20, \"count\": 258}, {\"hour\": 21, \"count\": 252}, {\"hour\": 22, \"count\": 284}, {\"hour\": 23, \"count\": 179}];\n        const hours = hourData.map(d => d.hour + ':00');\n        const hourCounts = hourData.map(d => d.count);\n        \n        new Chart(hourCtx, {\n            type: 'line',\n            data: {\n                labels: hours,\n                datasets: [{\n                    label: 'Page Views',\n                    data: hourCounts,\n                    borderColor: '#667eea',\n                    backgroundColor: 'rgba(102, 126, 234, 0.1)',\n                    borderWidth: 2,\n                    tension: 0.4,\n                    fill: true,\n                    pointBackgroundColor: '#667eea',\n                    pointBorderColor: '#fff',\n                    pointBorderWidth: 2,\n                    pointRadius: 4,\n                    pointHoverRadius: 6\n                }]\n            },\n            options: {\n                responsive: true,\n                maintainAspectRatio: false,\n                plugins: {\n                    legend: {\n                        display: true,\n                        labels: {\n                            font: { size: 12 },\n                            boxWidth: 12\n                        }\n                    }\n                },\n                scales: {\n                    y: {\n                        beginAtZero: true,\n                        ticks: {\n                            font: { size: 11 }\n                        },\n                        grid: {\n                            drawBorder: false,\n                            color: 'rgba(0, 0, 0, 0.05)'\n                        }\n                    },\n                    x: {\n                        grid: {\n                            display: false\n                        },\n                        ticks: {\n                            font: { size: 10 }\n                        }\n                    }\n                }\n            }\n        });\n        \n        // Traffic by Day of Week Chart\n        const dayCtx = document.getElementById('trafficByDayChart').getContext('2d');\n        const dayData = [{\"day_num\": 5, \"day_of_week\": \"Saturday\", \"count\": 10000}];\n        const days = dayData.map(d => d.day_of_week);\n        const dayCounts = dayData.map(d => d.count);\n        \n        new Chart(dayCtx, {\n            type: 'bar',\n            data: {\n                labels: days,\n                datasets: [{\n                    label: 'Page Views',\n                    data: dayCounts,\n                    backgroundColor: [\n                        'rgba(102, 126, 234, 0.8)',\n                        'rgba(118, 75, 162, 0.8)',\n                        'rgba(102, 126, 234, 0.8)',\n                        'rgba(118, 75, 162, 0.8)',\n                        'rgba(102, 126, 234, 0.8)',\n                        'rgba(118, 75, 162, 0.8)',\n                        'rgba(102, 126, 234, 0.8)'\n                    ],\n                    borderColor: '#667eea',\n                    borderWidth: 1,\n                    borderRadius: 4\n                }]\n            },\n            options: {\n                indexAxis: 'x',\n                responsive: true,\n                maintainAspectRatio: false,\n                plugins: {\n                    legend: {\n                        display: true,\n                        labels: {\n                            font: { size: 12 }\n                        }\n                    }\n                },\n                scales: {\n                    y: {\n                        beginAtZero: true,\n                        ticks: {\n                            font: { size: 11 }\n                        },\n                        grid: {\n                            drawBorder: false,\n                            color: 'rgba(0, 0, 0, 0.05)'\n                        }\n                    },\n                    x: {\n                        grid: {\n                            display: false\n                        },\n                        ticks: {\n                            font: { size: 11 }\n                        }\n                    }\n                }\n            }\n        });\n    </script>\n</body>\n</html>\n"}], "grading": {"eval_id": "eval-3-time-patterns", "run_type": "without_skill", "expectations": [{"text": "Output is a single self-contained HTML file", "passed": true, "evidence": "Found HTML file: analytics-dashboard.html (15057 chars)"}, {"text": "Dashboard uses Plotly.js", "passed": false, "evidence": "No Plotly reference; may use Chart.js or other"}, {"text": "Shows traffic by hour of day", "passed": true, "evidence": "Hourly pattern chart found"}, {"text": "Shows traffic by day of week", "passed": true, "evidence": "Day of week pattern found"}, {"text": "Shows site section engagement", "passed": true, "evidence": "Section engagement found"}, {"text": "KPI summary cards", "passed": true, "evidence": "KPI/metric card elements found"}, {"text": "Handles multilingual content", "passed": true, "evidence": "Multilingual content (CJK characters) present"}]}}], "previous_feedback": {}, "previous_outputs": {}, "benchmark": {"skill_name": "web-analytics-dashboard", "iteration": 1, "evals": [{"eval_name": "eval-1-full-dashboard", "configurations": [{"name": "with_skill", "pass_rate": 1.0, "passed": 9, "total": 9, "total_tokens": 51335, "duration_ms": 87929, "assertions": [{"text": "Output is a single self-contained HTML file", "passed": true, "evidence": "Found HTML file: web-analytics-dashboard.html (16638 chars)"}, {"text": "Dashboard uses Plotly.js for interactive charts", "passed": true, "evidence": "Plotly.js reference found"}, {"text": "Dashboard includes KPI summary cards", "passed": true, "evidence": "KPI/metric card elements found"}, {"text": "Dashboard includes a traffic over time chart", "passed": true, "evidence": "Traffic trend chart found"}, {"text": "Dashboard includes a top pages visualization", "passed": true, "evidence": "Top pages section found"}, {"text": "Dashboard includes geographic distribution", "passed": true, "evidence": "Geographic breakdown found"}, {"text": "Dashboard includes referrer breakdown", "passed": true, "evidence": "Referrer analysis found"}, {"text": "CSS includes responsive layout", "passed": true, "evidence": "Responsive CSS detected"}, {"text": "Professional appearance", "passed": true, "evidence": "Subjective - requires human evaluation"}]}, {"name": "without_skill", "pass_rate": 0.889, "passed": 8, "total": 9, "total_tokens": 38329, "duration_ms": 41987, "assertions": [{"text": "Output is a single self-contained HTML file", "passed": true, "evidence": "Found HTML file: analytics-dashboard.html (17223 chars)"}, {"text": "Dashboard uses Plotly.js for interactive charts", "passed": false, "evidence": "No Plotly reference; may use Chart.js or other"}, {"text": "Dashboard includes KPI summary cards", "passed": true, "evidence": "KPI/metric card elements found"}, {"text": "Dashboard includes a traffic over time chart", "passed": true, "evidence": "Traffic trend chart found"}, {"text": "Dashboard includes a top pages visualization", "passed": true, "evidence": "Top pages section found"}, {"text": "Dashboard includes geographic distribution", "passed": true, "evidence": "Geographic breakdown found"}, {"text": "Dashboard includes referrer breakdown", "passed": true, "evidence": "Referrer analysis found"}, {"text": "CSS includes responsive layout", "passed": true, "evidence": "Responsive CSS detected"}, {"text": "Professional appearance", "passed": true, "evidence": "Subjective - requires human evaluation"}]}]}, {"eval_name": "eval-2-saas-conversion", "configurations": [{"name": "with_skill", "pass_rate": 1.0, "passed": 8, "total": 8, "total_tokens": 52944, "duration_ms": 85610, "assertions": [{"text": "Output is a single self-contained HTML file", "passed": true, "evidence": "Found HTML file: dashboard.html (23451 chars)"}, {"text": "Dashboard uses Plotly.js", "passed": true, "evidence": "Plotly.js reference found"}, {"text": "Conversion funnel visualization", "passed": true, "evidence": "Conversion funnel found"}, {"text": "Traffic source breakdown", "passed": true, "evidence": "Traffic sources section found"}, {"text": "Device type distribution", "passed": true, "evidence": "Device breakdown found"}, {"text": "Daily traffic trend chart", "passed": true, "evidence": "Daily trends chart found"}, {"text": "KPI summary cards", "passed": true, "evidence": "KPI/metric card elements found"}, {"text": "Professional appearance", "passed": true, "evidence": "Subjective - requires human evaluation"}]}, {"name": "without_skill", "pass_rate": 0.875, "passed": 7, "total": 8, "total_tokens": 39643, "duration_ms": 44428, "assertions": [{"text": "Output is a single self-contained HTML file", "passed": true, "evidence": "Found HTML file: saas_analytics_dashboard.html (17774 chars)"}, {"text": "Dashboard uses Plotly.js", "passed": false, "evidence": "No Plotly reference; may use Chart.js or other"}, {"text": "Conversion funnel visualization", "passed": true, "evidence": "Conversion funnel found"}, {"text": "Traffic source breakdown", "passed": true, "evidence": "Traffic sources section found"}, {"text": "Device type distribution", "passed": true, "evidence": "Device breakdown found"}, {"text": "Daily traffic trend chart", "passed": true, "evidence": "Daily trends chart found"}, {"text": "KPI summary cards", "passed": true, "evidence": "KPI/metric card elements found"}, {"text": "Professional appearance", "passed": true, "evidence": "Subjective - requires human evaluation"}]}]}, {"eval_name": "eval-3-time-patterns", "configurations": [{"name": "with_skill", "pass_rate": 0.857, "passed": 6, "total": 7, "total_tokens": 44757, "duration_ms": 54154, "assertions": [{"text": "Output is a single self-contained HTML file", "passed": true, "evidence": "Found HTML file: dashboard.html (18762 chars)"}, {"text": "Dashboard uses Plotly.js", "passed": true, "evidence": "Plotly.js reference found"}, {"text": "Shows traffic by hour of day", "passed": true, "evidence": "Hourly pattern chart found"}, {"text": "Shows traffic by day of week", "passed": true, "evidence": "Day of week pattern found"}, {"text": "Shows site section engagement", "passed": true, "evidence": "Section engagement found"}, {"text": "KPI summary cards", "passed": true, "evidence": "KPI/metric card elements found"}, {"text": "Handles multilingual content", "passed": false, "evidence": "No multilingual content detected"}]}, {"name": "without_skill", "pass_rate": 0.857, "passed": 6, "total": 7, "total_tokens": 37333, "duration_ms": 41235, "assertions": [{"text": "Output is a single self-contained HTML file", "passed": true, "evidence": "Found HTML file: analytics-dashboard.html (15057 chars)"}, {"text": "Dashboard uses Plotly.js", "passed": false, "evidence": "No Plotly reference; may use Chart.js or other"}, {"text": "Shows traffic by hour of day", "passed": true, "evidence": "Hourly pattern chart found"}, {"text": "Shows traffic by day of week", "passed": true, "evidence": "Day of week pattern found"}, {"text": "Shows site section engagement", "passed": true, "evidence": "Section engagement found"}, {"text": "KPI summary cards", "passed": true, "evidence": "KPI/metric card elements found"}, {"text": "Handles multilingual content", "passed": true, "evidence": "Multilingual content (CJK characters) present"}]}]}], "summary": {"with_skill": {"pass_rate": {"mean": 0.952, "stdev": 0.082}, "tokens": {"mean": 49678.667, "stdev": 4337.548}, "duration_ms": {"mean": 75897.667, "stdev": 18866.232}}, "without_skill": {"pass_rate": {"mean": 0.874, "stdev": 0.016}, "tokens": {"mean": 38435, "stdev": 1158.642}, "duration_ms": {"mean": 42550, "stdev": 1669.293}}, "delta": {"pass_rate": 0.079, "tokens": 11244.0, "duration_ms": 33348.0}}}};
+
+    // ---- State ----
+    let feedbackMap = {};  // run_id -> feedback text
+    let currentIndex = 0;
+    let visitedRuns = new Set();
+
+    // ---- Init ----
+    async function init() {
+      // Load saved feedback from server — but only if this isn't a fresh
+      // iteration (indicated by previous_feedback being present). When
+      // previous feedback exists, the feedback.json on disk is stale from
+      // the prior iteration and should not pre-fill the textareas.
+      const hasPrevious = Object.keys(EMBEDDED_DATA.previous_feedback || {}).length > 0
+        || Object.keys(EMBEDDED_DATA.previous_outputs || {}).length > 0;
+      if (!hasPrevious) {
+        try {
+          const resp = await fetch("/api/feedback");
+          const data = await resp.json();
+          if (data.reviews) {
+            for (const r of data.reviews) feedbackMap[r.run_id] = r.feedback;
+          }
+        } catch { /* first run, no feedback yet */ }
+      }
+
+      document.getElementById("skill-name").textContent = EMBEDDED_DATA.skill_name;
+      showRun(0);
+
+      // Wire up feedback auto-save
+      const textarea = document.getElementById("feedback");
+      let saveTimeout = null;
+      textarea.addEventListener("input", () => {
+        clearTimeout(saveTimeout);
+        document.getElementById("feedback-status").textContent = "";
+        saveTimeout = setTimeout(() => saveCurrentFeedback(), 800);
+      });
+    }
+
+    // ---- Navigation ----
+    function navigate(delta) {
+      const newIndex = currentIndex + delta;
+      if (newIndex >= 0 && newIndex < EMBEDDED_DATA.runs.length) {
+        saveCurrentFeedback();
+        showRun(newIndex);
+      }
+    }
+
+    function updateNavButtons() {
+      document.getElementById("prev-btn").disabled = currentIndex === 0;
+      document.getElementById("next-btn").disabled =
+        currentIndex === EMBEDDED_DATA.runs.length - 1;
+    }
+
+    // ---- Show a run ----
+    function showRun(index) {
+      currentIndex = index;
+      const run = EMBEDDED_DATA.runs[index];
+
+      // Progress
+      document.getElementById("progress").textContent =
+        `${index + 1} of ${EMBEDDED_DATA.runs.length}`;
+
+      // Prompt
+      document.getElementById("prompt-text").textContent = run.prompt;
+
+      // Config badge
+      const badge = document.getElementById("config-badge");
+      const configMatch = run.id.match(/(with_skill|without_skill|new_skill|old_skill)/);
+      if (configMatch) {
+        const config = configMatch[1];
+        const isBaseline = config === "without_skill" || config === "old_skill";
+        badge.textContent = config.replace(/_/g, " ");
+        badge.className = "config-badge " + (isBaseline ? "config-baseline" : "config-primary");
+        badge.style.display = "inline-block";
+      } else {
+        badge.style.display = "none";
+      }
+
+      // Outputs
+      renderOutputs(run);
+
+      // Previous outputs
+      renderPrevOutputs(run);
+
+      // Grades
+      renderGrades(run);
+
+      // Previous feedback
+      const prevFb = (EMBEDDED_DATA.previous_feedback || {})[run.id];
+      const prevEl = document.getElementById("prev-feedback");
+      if (prevFb) {
+        document.getElementById("prev-feedback-text").textContent = prevFb;
+        prevEl.style.display = "block";
+      } else {
+        prevEl.style.display = "none";
+      }
+
+      // Feedback
+      document.getElementById("feedback").value = feedbackMap[run.id] || "";
+      document.getElementById("feedback-status").textContent = "";
+
+      updateNavButtons();
+
+      // Track visited runs and promote done button when all visited
+      visitedRuns.add(index);
+      const doneBtn = document.getElementById("done-btn");
+      if (visitedRuns.size >= EMBEDDED_DATA.runs.length) {
+        doneBtn.classList.add("ready");
+      }
+
+      // Scroll main content to top
+      document.querySelector(".main").scrollTop = 0;
+    }
+
+    // ---- Render outputs ----
+    function renderOutputs(run) {
+      const container = document.getElementById("outputs-body");
+      container.innerHTML = "";
+
+      const outputs = run.outputs || [];
+      if (outputs.length === 0) {
+        container.innerHTML = '<div class="empty-state">No output files</div>';
+        return;
+      }
+
+      for (const file of outputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        // Always show file header with download link
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const content = document.createElement("div");
+        content.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          content.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          content.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          content.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(content, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          content.appendChild(a);
+        } else if (file.type === "error") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          pre.style.color = "var(--red)";
+          content.appendChild(pre);
+        }
+
+        fileDiv.appendChild(content);
+        container.appendChild(fileDiv);
+      }
+    }
+
+    // ---- XLSX rendering via SheetJS ----
+    function renderXlsx(container, b64Data) {
+      try {
+        const raw = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
+        const wb = XLSX.read(raw, { type: "array" });
+
+        for (let i = 0; i < wb.SheetNames.length; i++) {
+          const sheetName = wb.SheetNames[i];
+          const ws = wb.Sheets[sheetName];
+
+          if (wb.SheetNames.length > 1) {
+            const sheetLabel = document.createElement("div");
+            sheetLabel.style.cssText =
+              "font-weight:600; font-size:0.8rem; color:#b0aea5; margin-top:0.5rem; margin-bottom:0.25rem;";
+            sheetLabel.textContent = "Sheet: " + sheetName;
+            container.appendChild(sheetLabel);
+          }
+
+          const htmlStr = XLSX.utils.sheet_to_html(ws, { editable: false });
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = htmlStr;
+          container.appendChild(wrapper);
+        }
+      } catch (err) {
+        container.textContent = "Error rendering spreadsheet: " + err.message;
+      }
+    }
+
+    // ---- Grades ----
+    function renderGrades(run) {
+      const section = document.getElementById("grades-section");
+      const content = document.getElementById("grades-content");
+
+      if (!run.grading) {
+        section.style.display = "none";
+        return;
+      }
+
+      const grading = run.grading;
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("grades-arrow").classList.remove("open");
+
+      const summary = grading.summary || {};
+      const expectations = grading.expectations || [];
+
+      let html = '<div style="padding: 1rem;">';
+
+      // Summary line
+      const passRate = summary.pass_rate != null
+        ? Math.round(summary.pass_rate * 100) + "%"
+        : "?";
+      const badgeClass = summary.pass_rate >= 0.8 ? "grade-pass" : summary.pass_rate >= 0.5 ? "" : "grade-fail";
+      html += '<div class="grades-summary">';
+      html += '<span class="grade-badge ' + badgeClass + '">' + passRate + '</span>';
+      html += '<span>' + (summary.passed || 0) + ' passed, ' + (summary.failed || 0) + ' failed of ' + (summary.total || 0) + '</span>';
+      html += '</div>';
+
+      // Assertions list
+      html += '<ul class="assertion-list">';
+      for (const exp of expectations) {
+        const statusClass = exp.passed ? "pass" : "fail";
+        const statusIcon = exp.passed ? "\u2713" : "\u2717";
+        html += '<li class="assertion-item">';
+        html += '<span class="assertion-status ' + statusClass + '">' + statusIcon + '</span>';
+        html += '<span>' + escapeHtml(exp.text) + '</span>';
+        if (exp.evidence) {
+          html += '<div class="assertion-evidence">' + escapeHtml(exp.evidence) + '</div>';
+        }
+        html += '</li>';
+      }
+      html += '</ul>';
+
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function toggleGrades() {
+      const content = document.getElementById("grades-content");
+      const arrow = document.getElementById("grades-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Previous outputs (collapsible) ----
+    function renderPrevOutputs(run) {
+      const section = document.getElementById("prev-outputs-section");
+      const content = document.getElementById("prev-outputs-content");
+      const prevOutputs = (EMBEDDED_DATA.previous_outputs || {})[run.id];
+
+      if (!prevOutputs || prevOutputs.length === 0) {
+        section.style.display = "none";
+        return;
+      }
+
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("prev-outputs-arrow").classList.remove("open");
+
+      // Render the files into the content area
+      content.innerHTML = "";
+      const wrapper = document.createElement("div");
+      wrapper.style.padding = "1rem";
+
+      for (const file of prevOutputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const fc = document.createElement("div");
+        fc.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          fc.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          fc.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          fc.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(fc, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          fc.appendChild(a);
+        }
+
+        fileDiv.appendChild(fc);
+        wrapper.appendChild(fileDiv);
+      }
+
+      content.appendChild(wrapper);
+    }
+
+    function togglePrevOutputs() {
+      const content = document.getElementById("prev-outputs-content");
+      const arrow = document.getElementById("prev-outputs-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Feedback (saved to server -> feedback.json) ----
+    function saveCurrentFeedback() {
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // Build reviews array from map
+      const reviews = [];
+      for (const [run_id, feedback] of Object.entries(feedbackMap)) {
+        if (feedback.trim()) {
+          reviews.push({ run_id, feedback, timestamp: new Date().toISOString() });
+        }
+      }
+
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviews, status: "in_progress" }),
+      }).then(() => {
+        document.getElementById("feedback-status").textContent = "Saved";
+      }).catch(() => {
+        // Static mode or server unavailable — no-op on auto-save,
+        // feedback will be downloaded on final submit
+        document.getElementById("feedback-status").textContent = "Will download on submit";
+      });
+    }
+
+    // ---- Done ----
+    function showDoneDialog() {
+      // Save current textarea to feedbackMap (but don't POST yet)
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // POST once with status: complete — include ALL runs so the model
+      // can distinguish "no feedback" (looks good) from "not reviewed"
+      const reviews = [];
+      const ts = new Date().toISOString();
+      for (const r of EMBEDDED_DATA.runs) {
+        reviews.push({ run_id: r.id, feedback: feedbackMap[r.id] || "", timestamp: ts });
+      }
+      const payload = JSON.stringify({ reviews, status: "complete" }, null, 2);
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      }).then(() => {
+        document.getElementById("done-overlay").classList.add("visible");
+      }).catch(() => {
+        // Server not available (static mode) — download as file
+        const blob = new Blob([payload], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "feedback.json";
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById("done-overlay").classList.add("visible");
+      });
+    }
+
+    function closeDoneDialog() {
+      // Reset status back to in_progress
+      saveCurrentFeedback();
+      document.getElementById("done-overlay").classList.remove("visible");
+    }
+
+    // ---- Toast ----
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      setTimeout(() => toast.classList.remove("visible"), 2000);
+    }
+
+    // ---- Keyboard nav ----
+    document.addEventListener("keydown", (e) => {
+      // Don't capture when typing in textarea
+      if (e.target.tagName === "TEXTAREA") return;
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        navigate(-1);
+      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        navigate(1);
+      }
+    });
+
+    // ---- Util ----
+    function getDownloadUri(file) {
+      if (file.data_uri) return file.data_uri;
+      if (file.data_b64) return "data:application/octet-stream;base64," + file.data_b64;
+      if (file.type === "text") return "data:text/plain;charset=utf-8," + encodeURIComponent(file.content);
+      return "#";
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ---- View switching ----
+    function switchView(view) {
+      document.querySelectorAll(".view-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+      document.querySelector(`[onclick="switchView('${view}')"]`).classList.add("active");
+      document.getElementById("panel-" + view).classList.add("active");
+    }
+
+    // ---- Benchmark rendering ----
+    function renderBenchmark() {
+      const data = EMBEDDED_DATA.benchmark;
+      if (!data) return;
+
+      // Show the tabs
+      document.getElementById("view-tabs").style.display = "flex";
+
+      const container = document.getElementById("benchmark-content");
+      const summary = data.run_summary || {};
+      const metadata = data.metadata || {};
+      const notes = data.notes || [];
+
+      let html = "";
+
+      // Header
+      html += "<h2 style='font-family: Poppins, sans-serif; margin-bottom: 0.5rem;'>Benchmark Results</h2>";
+      html += "<p style='color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;'>";
+      if (metadata.skill_name) html += "<strong>" + escapeHtml(metadata.skill_name) + "</strong> &mdash; ";
+      if (metadata.timestamp) html += metadata.timestamp + " &mdash; ";
+      if (metadata.evals_run) html += "Evals: " + metadata.evals_run.join(", ") + " &mdash; ";
+      html += (metadata.runs_per_configuration || "?") + " runs per configuration";
+      html += "</p>";
+
+      // Summary table
+      html += '<table class="benchmark-table">';
+
+      function fmtStat(stat, pct) {
+        if (!stat) return "—";
+        const suffix = pct ? "%" : "";
+        const m = pct ? (stat.mean * 100).toFixed(0) : stat.mean.toFixed(1);
+        const s = pct ? (stat.stddev * 100).toFixed(0) : stat.stddev.toFixed(1);
+        return m + suffix + " ± " + s + suffix;
+      }
+
+      function deltaClass(val) {
+        if (!val) return "";
+        const n = parseFloat(val);
+        if (n > 0) return "benchmark-delta-positive";
+        if (n < 0) return "benchmark-delta-negative";
+        return "";
+      }
+
+      // Discover config names dynamically (everything except "delta")
+      const configs = Object.keys(summary).filter(k => k !== "delta");
+      const configA = configs[0] || "config_a";
+      const configB = configs[1] || "config_b";
+      const labelA = configA.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const labelB = configB.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const a = summary[configA] || {};
+      const b = summary[configB] || {};
+      const delta = summary.delta || {};
+
+      html += "<thead><tr><th>Metric</th><th>" + escapeHtml(labelA) + "</th><th>" + escapeHtml(labelB) + "</th><th>Delta</th></tr></thead>";
+      html += "<tbody>";
+
+      html += "<tr><td><strong>Pass Rate</strong></td>";
+      html += "<td>" + fmtStat(a.pass_rate, true) + "</td>";
+      html += "<td>" + fmtStat(b.pass_rate, true) + "</td>";
+      html += '<td class="' + deltaClass(delta.pass_rate) + '">' + (delta.pass_rate || "—") + "</td></tr>";
+
+      // Time (only show row if data exists)
+      if (a.time_seconds || b.time_seconds) {
+        html += "<tr><td><strong>Time (s)</strong></td>";
+        html += "<td>" + fmtStat(a.time_seconds, false) + "</td>";
+        html += "<td>" + fmtStat(b.time_seconds, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.time_seconds) + '">' + (delta.time_seconds ? delta.time_seconds + "s" : "—") + "</td></tr>";
+      }
+
+      // Tokens (only show row if data exists)
+      if (a.tokens || b.tokens) {
+        html += "<tr><td><strong>Tokens</strong></td>";
+        html += "<td>" + fmtStat(a.tokens, false) + "</td>";
+        html += "<td>" + fmtStat(b.tokens, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.tokens) + '">' + (delta.tokens || "—") + "</td></tr>";
+      }
+
+      html += "</tbody></table>";
+
+      // Per-eval breakdown (if runs data available)
+      const runs = data.runs || [];
+      if (runs.length > 0) {
+        const evalIds = [...new Set(runs.map(r => r.eval_id))].sort((a, b) => a - b);
+
+        html += "<h3 style='font-family: Poppins, sans-serif; margin-bottom: 0.75rem;'>Per-Eval Breakdown</h3>";
+
+        const hasTime = runs.some(r => r.result && r.result.time_seconds != null);
+        const hasErrors = runs.some(r => r.result && r.result.errors > 0);
+
+        for (const evalId of evalIds) {
+          const evalRuns = runs.filter(r => r.eval_id === evalId);
+          const evalName = evalRuns[0] && evalRuns[0].eval_name ? evalRuns[0].eval_name : "Eval " + evalId;
+
+          html += "<h4 style='font-family: Poppins, sans-serif; margin: 1rem 0 0.5rem; color: var(--text);'>" + escapeHtml(evalName) + "</h4>";
+          html += '<table class="benchmark-table">';
+          html += "<thead><tr><th>Config</th><th>Run</th><th>Pass Rate</th>";
+          if (hasTime) html += "<th>Time (s)</th>";
+          if (hasErrors) html += "<th>Crashes During Execution</th>";
+          html += "</tr></thead>";
+          html += "<tbody>";
+
+          // Group by config and render with average rows
+          const configGroups = [...new Set(evalRuns.map(r => r.configuration))];
+          for (let ci = 0; ci < configGroups.length; ci++) {
+            const config = configGroups[ci];
+            const configRuns = evalRuns.filter(r => r.configuration === config);
+            if (configRuns.length === 0) continue;
+
+            const rowClass = ci === 0 ? "benchmark-row-with" : "benchmark-row-without";
+            const configLabel = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+            for (const run of configRuns) {
+              const r = run.result || {};
+              const prClass = r.pass_rate >= 0.8 ? "benchmark-delta-positive" : r.pass_rate < 0.5 ? "benchmark-delta-negative" : "";
+              html += '<tr class="' + rowClass + '">';
+              html += "<td>" + configLabel + "</td>";
+              html += "<td>" + run.run_number + "</td>";
+              html += '<td class="' + prClass + '">' + ((r.pass_rate || 0) * 100).toFixed(0) + "% (" + (r.passed || 0) + "/" + (r.total || 0) + ")</td>";
+              if (hasTime) html += "<td>" + (r.time_seconds != null ? r.time_seconds.toFixed(1) : "—") + "</td>";
+              if (hasErrors) html += "<td>" + (r.errors || 0) + "</td>";
+              html += "</tr>";
+            }
+
+            // Average row
+            const rates = configRuns.map(r => (r.result || {}).pass_rate || 0);
+            const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
+            const avgPrClass = avgRate >= 0.8 ? "benchmark-delta-positive" : avgRate < 0.5 ? "benchmark-delta-negative" : "";
+            html += '<tr class="benchmark-row-avg ' + rowClass + '">';
+            html += "<td>" + configLabel + "</td>";
+            html += "<td>Avg</td>";
+            html += '<td class="' + avgPrClass + '">' + (avgRate * 100).toFixed(0) + "%</td>";
+            if (hasTime) {
+              const times = configRuns.map(r => (r.result || {}).time_seconds).filter(t => t != null);
+              html += "<td>" + (times.length ? (times.reduce((a, b) => a + b, 0) / times.length).toFixed(1) : "—") + "</td>";
+            }
+            if (hasErrors) html += "<td></td>";
+            html += "</tr>";
+          }
+          html += "</tbody></table>";
+
+          // Per-assertion detail for this eval
+          const runsWithExpectations = {};
+          for (const config of configGroups) {
+            runsWithExpectations[config] = evalRuns.filter(r => r.configuration === config && r.expectations && r.expectations.length > 0);
+          }
+          const hasAnyExpectations = Object.values(runsWithExpectations).some(runs => runs.length > 0);
+          if (hasAnyExpectations) {
+            // Collect all unique assertion texts across all configs
+            const allAssertions = [];
+            const seen = new Set();
+            for (const config of configGroups) {
+              for (const run of runsWithExpectations[config]) {
+                for (const exp of (run.expectations || [])) {
+                  if (!seen.has(exp.text)) {
+                    seen.add(exp.text);
+                    allAssertions.push(exp.text);
+                  }
+                }
+              }
+            }
+
+            html += '<table class="benchmark-table" style="margin-top: 0.5rem;">';
+            html += "<thead><tr><th>Assertion</th>";
+            for (const config of configGroups) {
+              const label = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+              html += "<th>" + escapeHtml(label) + "</th>";
+            }
+            html += "</tr></thead><tbody>";
+
+            for (const assertionText of allAssertions) {
+              html += "<tr><td>" + escapeHtml(assertionText) + "</td>";
+
+              for (const config of configGroups) {
+                html += "<td>";
+                for (const run of runsWithExpectations[config]) {
+                  const exp = (run.expectations || []).find(e => e.text === assertionText);
+                  if (exp) {
+                    const cls = exp.passed ? "benchmark-delta-positive" : "benchmark-delta-negative";
+                    const icon = exp.passed ? "\u2713" : "\u2717";
+                    html += '<span class="' + cls + '" title="Run ' + run.run_number + ': ' + escapeHtml(exp.evidence || "") + '">' + icon + "</span> ";
+                  } else {
+                    html += "— ";
+                  }
+                }
+                html += "</td>";
+              }
+              html += "</tr>";
+            }
+            html += "</tbody></table>";
+          }
+        }
+      }
+
+      // Notes
+      if (notes.length > 0) {
+        html += '<div class="benchmark-notes">';
+        html += "<h3>Analysis Notes</h3>";
+        html += "<ul>";
+        for (const note of notes) {
+          html += "<li>" + escapeHtml(note) + "</li>";
+        }
+        html += "</ul></div>";
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ---- Start ----
+    init();
+    renderBenchmark();
+  </script>
+</body>
+</html>
