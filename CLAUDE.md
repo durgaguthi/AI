@@ -33,19 +33,17 @@ A fully self-contained single-file Tic Tac Toe game. Open directly in any browse
 
 **Known quirk:** `makeSVG` for X renders 4 lines (the first two are duplicates from a `.flat()` leftover); visually correct but redundant.
 ## Project Status
-_Auto-updated: 2026-03-18 23:35:59_
+_Auto-updated: 2026-03-18 23:41:37_
 
 ### Recent commits
+24d072f Auto-commit: 2026-03-18 23:35:59
 04b85dd Auto-commit: 2026-03-18 23:30:37
 c73ad65 Auto-commit: 2026-03-18 23:25:12
 c9812c8 Auto-commit: 2026-03-18 23:19:52
 7867144 Auto-commit: 2026-03-18 23:14:30
-bdabcab Auto-commit: 2026-03-18 23:09:10
 
 ### Files changed since last commit
-?? webanalytics/eval-review-iteration-1.html
-?? webanalytics/skill-test-results.pptx
-?? webanalytics/~$skill-test-results.pptx
+ M .DS_Store
 
 ### Files in repo
 - .DS_Store
@@ -66,4 +64,7 @@ bdabcab Auto-commit: 2026-03-18 23:09:10
 - tictactoe.html
 - webanalytics/.DS_Store
 - webanalytics/data/dotcom_analytics.xlsx
+- webanalytics/eval-review-iteration-1.html
+- webanalytics/skill-test-results.pptx
+- webanalytics/~$skill-test-results.pptx
 
