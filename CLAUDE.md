@@ -33,18 +33,17 @@ A fully self-contained single-file Tic Tac Toe game. Open directly in any browse
 
 **Known quirk:** `makeSVG` for X renders 4 lines (the first two are duplicates from a `.flat()` leftover); visually correct but redundant.
 ## Project Status
-_Auto-updated: 2026-03-18 17:55:35_
+_Auto-updated: 2026-03-18 18:01:05_
 
 ### Recent commits
+6adbb40 Auto-commit: 2026-03-18 17:55:35
 dbfad8b Auto-commit: 2026-03-18 17:50:11
 8157664 Auto-commit: 2026-03-18 17:44:47
 2fd5610 Auto-commit: 2026-03-18 17:39:24
 72ecb1e Auto-commit: 2026-03-18 17:34:02
-b2a3ed9 Auto-commit: 2026-03-18 17:28:35
 
 ### Files changed since last commit
- M ContentCreation/ref/edge_persona.xlsx
-?? ContentCreation/ref/~$edge_persona.xlsx
+(none)
 
 ### Files in repo
 - .DS_Store
@@ -58,6 +57,7 @@ b2a3ed9 Auto-commit: 2026-03-18 17:28:35
 - ContentCreation/ref/edge.xlsx
 - ContentCreation/ref/edge1.xlsx
 - ContentCreation/ref/edge_persona.xlsx
+- ContentCreation/ref/~$edge_persona.xlsx
 - adobe_analytics_dashboard.py
 - auto-commit.sh
 - tictactoe.html
