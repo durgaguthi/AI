@@ -33,19 +33,17 @@ A fully self-contained single-file Tic Tac Toe game. Open directly in any browse
 
 **Known quirk:** `makeSVG` for X renders 4 lines (the first two are duplicates from a `.flat()` leftover); visually correct but redundant.
 ## Project Status
-_Auto-updated: 2026-03-25 09:48:33_
+_Auto-updated: 2026-03-25 09:53:35_
 
 ### Recent commits
+c5b143e Auto-commit: 2026-03-25 09:48:33
 1d8748d Auto-commit: 2026-03-25 09:43:31
 de6fc27 Auto-commit: 2026-03-25 09:38:29
 7ab042c Auto-commit: 2026-03-25 09:33:27
 2bbbd24 Auto-commit: 2026-03-25 09:28:26
-65c420b Auto-commit: 2026-03-25 09:23:23
 
 ### Files changed since last commit
- M .DS_Store
-?? ContentCreation/ref/~$edge_persona.xlsx
-?? webanalytics/~$Solidigm_Analytics_Report_JanFeb_FY26.pptx
+(none)
 
 ### Files in repo
 - .DS_Store
@@ -59,6 +57,7 @@ de6fc27 Auto-commit: 2026-03-25 09:38:29
 - ContentCreation/ref/edge.xlsx
 - ContentCreation/ref/edge1.xlsx
 - ContentCreation/ref/edge_persona.xlsx
+- ContentCreation/ref/~$edge_persona.xlsx
 - Solidigm_Analytics_Report_JanFeb_FY26.pptx
 - adobe_analytics_dashboard.py
 - auto-commit.sh
@@ -76,4 +75,5 @@ de6fc27 Auto-commit: 2026-03-25 09:38:29
 - webanalytics/solidigm-web-analytics.skill
 - webanalytics/ziEozbZG
 - webanalytics/zioHljC7
+- webanalytics/~$Solidigm_Analytics_Report_JanFeb_FY26.pptx
 
