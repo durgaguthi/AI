@@ -20,47 +20,120 @@ BIGQUERY_TABLE   = os.environ.get("BIGQUERY_TABLE",   "adobe_hits")
 
 FULL_TABLE_ID = f"`{BIGQUERY_PROJECT}.{BIGQUERY_DATASET}.{BIGQUERY_TABLE}`"
 
-# dotcom_web_data schema (mapped from sample row inspection)
+# WEBSITE_STATS schema — Solidigm Adobe Analytics (3 months: Jan-Mar 2026)
 TABLE_SCHEMA = """
 Table: {table}
+Data range: 2026-01-01 to 2026-03-26 | Total rows: ~1.8 million
 
-Key columns (dotcom_web_data — Solidigm Adobe Analytics):
-  - string_field_42     STRING    Hit datetime (e.g. '2026-01-05 00:48:33')
-  - string_field_47     STRING    Page name / title (e.g. 'solidigm d5-p5316 product brief')
-  - string_field_48     STRING    Page URL (full URL of the page visited)
-  - string_field_49     STRING    Referrer URL (where the visitor came from)
-  - string_field_50     STRING    Referrer domain (e.g. 'google.com')
-  - string_field_43     STRING    Referrer domain alternate
-  - string_field_53     STRING    City (e.g. 'beijing')
-  - string_field_54     STRING    Country code (e.g. 'chn', 'usa')
-  - string_field_56     STRING    Region/state code
-  - int64_field_51      INTEGER   Visit number
-  - int64_field_52      INTEGER   Visitor ID high
-  - int64_field_60      INTEGER   Page view count indicator (1 = page view)
-  - int64_field_61      INTEGER   Hit timestamp (Unix epoch seconds)
-  - int64_field_70      INTEGER   First hit timestamp (Unix epoch seconds)
-  - int64_field_67      INTEGER   Visit page number
-  - string_field_149    STRING    User agent (browser/OS string)
-  - string_field_107    STRING    Site section / eVar
-  - string_field_109    STRING    Site entry page URL
-  - string_field_45     STRING    Event list (comma-separated event IDs)
-  - int64_field_112     INTEGER   Browser window height (px)
-  - int64_field_113     INTEGER   Browser window width (px)
-  - string_field_161    STRING    Post page name
-  - string_field_162    STRING    Post page URL
-  - string_field_126    STRING    Post site section
-  - string_field_139    STRING    Post referrer URL
-  - string_field_140    STRING    Post referrer domain
+Key columns:
+
+-- TIME --
+  - date_time           STRING    Hit datetime with timezone (e.g. '2026-03-25 19:21:30+00')
+  - hit_time_gmt        STRING    Hit timestamp as Unix epoch string (cast to INT64 to use)
+  - first_hit_time_gmt  STRING    First hit of visit timestamp (Unix epoch string)
+  - last_hit_time_gmt   STRING    Last hit of visit timestamp (Unix epoch string)
+
+-- PAGE --
+  - pagename            STRING    Page name/title (e.g. 'd7-ps1010')
+  - page_url            STRING    Full page URL
+  - post_pagename       STRING    Post-processed page name (most reliable)
+  - post_page_url       STRING    Post-processed page URL
+  - prev_page           STRING    Previous page name
+  - first_hit_pagename  STRING    First page of visit
+  - first_hit_page_url  STRING    First page URL of visit
+  - channel             STRING    Site channel/section
+  - homepage            STRING    Homepage flag
+
+-- VISITOR / VISIT --
+  - post_visid_high     STRING    Visitor ID high (use with post_visid_low for unique visitor)
+  - post_visid_low      STRING    Visitor ID low
+  - mcvisid             STRING    Marketing Cloud Visitor ID
+  - new_visit           STRING    '1' = new visit, '0' = return visit
+  - daily_visitor       STRING    '1' = new daily visitor
+  - monthly_visitor     STRING    '1' = new monthly visitor
+  - hourly_visitor      STRING    '1' = new hourly visitor
+  - duplicate_purchase  STRING    Duplicate purchase flag (filter = '0')
+  - exclude_hit         STRING    Exclude flag (filter = '0' for valid hits)
+
+-- GEOGRAPHY --
+  - geo_city            STRING    City (e.g. 'guangzhou')
+  - geo_country         STRING    Country code (e.g. 'chn', 'usa')
+  - geo_region          STRING    Region/state code (e.g. 'gd', 'ca')
+  - geo_zip             STRING    ZIP/postal code
+  - geo_dma             STRING    DMA code
+  - country             STRING    Country numeric ID
+  - domain              STRING    ISP domain (e.g. 'tencent.com')
+
+-- REFERRER / TRAFFIC SOURCE --
+  - post_referrer       STRING    Referring URL
+  - post_search_engine  STRING    Search engine name if organic search
+  - paid_search         STRING    '1' = paid search hit
+  - first_hit_referrer  STRING    First referrer of visit
+  - first_hit_ref_type  STRING    Referrer type (1=URL, 2=inside, 3=news, 4=search, 6=direct)
+  - first_hit_ref_domain STRING   First referrer domain
+
+-- CAMPAIGN / MARKETING --
+  - post_campaign       STRING    Full campaign string (e.g. 'direct|doit|productpage|campaign_name')
+  - evar5               STRING    UTM channel (e.g. 'direct', 'organic')
+  - evar6               STRING    UTM platform (e.g. 'google', 'doit')
+  - evar7               STRING    UTM content (e.g. 'productpage')
+  - evar9               STRING    UTM campaign name
+  - evar4               STRING    Landing page URL with UTM params
+  - campaign            STRING    Campaign tracking code
+
+-- EVENTS / CONVERSIONS --
+  - post_event_list     STRING    Comma-separated event IDs fired (e.g. '100,102,103')
+  - event_list          STRING    Raw event list
+  - page_event          STRING    Page event type (11=custom link, 101=download)
+
+-- PRODUCT / CONTENT --
+  - evar1               STRING    Product/page identifier (e.g. 'd7-ps1010')
+  - post_evar1          STRING    Post-processed product identifier
+  - evar11              STRING    Language (e.g. 'en', 'zh', 'de')
+  - post_evar11         STRING    Post-processed language
+  - evar3               STRING    Visitor ID / MCID
+  - post_evar21         STRING    Date/time detail (e.g. 'year=2026 | month=March | date=25')
+  - post_evar22         STRING    Visitor type ('New' or 'Return')
+  - post_evar23         STRING    Visit number
+  - post_evar24         STRING    Hit detail (e.g. 'first hit of visit')
+  - post_evar20         STRING    Visitor IP address
+
+-- CLICK TRACKING --
+  - click_action        STRING    Clicked link URL
+  - click_context       STRING    Page where click happened
+  - post_clickmaplink   STRING    Clicked link text/ID
+  - post_clickmapregion STRING    Page region of click (e.g. 'bodycopy2', 'header')
+  - post_clickmappage   STRING    Page name of click
+
+-- BROWSER / DEVICE --
+  - browser             STRING    Browser ID
+  - browser_height      STRING    Browser viewport height (px)
+  - browser_width       STRING    Browser viewport width (px)
+  - os                  STRING    Operating system ID
+  - mobile_id           STRING    Mobile device ID ('0' = desktop)
+  - connection_type     STRING    Connection type ID
+  - color               STRING    Color depth
+  - javascript          STRING    JavaScript version
+  - java_enabled        STRING    Java enabled flag
+  - accept_language     STRING    Browser language header
+  - cookies             STRING    Cookies enabled flag
+
+-- PROPS --
+  - prop2 / post_prop2  STRING    Custom prop 2 (page URL truncated)
+  - prop3 / post_prop3  STRING    Custom prop 3 (visitor ID)
+  - prop4               STRING    Custom prop 4
+  - prop5               STRING    Custom prop 5
 
 Important query rules:
-  1. Use TIMESTAMP_SECONDS(int64_field_61) to convert hit timestamps to readable dates
-  2. Count unique visitors with COUNT(DISTINCT int64_field_52)
-  3. Count page views with COUNT(*) or SUM(int64_field_60)
-  4. Filter by date: DATE(TIMESTAMP_SECONDS(int64_field_61)) = '2026-01-05'
-  5. For date ranges: DATE(TIMESTAMP_SECONDS(int64_field_61)) BETWEEN '2026-01-01' AND '2026-01-31'
-  6. Page name is string_field_47, Page URL is string_field_48
-  7. Country is string_field_54, City is string_field_53
-  8. Referrer domain is string_field_50
+  1. Convert timestamps: TIMESTAMP_SECONDS(CAST(hit_time_gmt AS INT64))
+  2. Filter date: DATE(TIMESTAMP_SECONDS(CAST(hit_time_gmt AS INT64)))
+  3. Always filter valid hits: WHERE exclude_hit = '0'
+  4. Count unique visitors: COUNT(DISTINCT CONCAT(post_visid_high, post_visid_low))
+  5. Count visits: COUNT(DISTINCT CONCAT(post_visid_high, post_visid_low, new_visit))
+  6. Count page views: COUNT(*) WHERE exclude_hit = '0' AND page_event = '0'
+  7. Use post_pagename for page names (most reliable)
+  8. Use post_campaign for full campaign breakdown
+  9. Data range: '2026-01-01' to '2026-03-26'
 """.format(table=FULL_TABLE_ID)
 
 SYSTEM_PROMPT = f"""You are an expert Adobe Analytics and BigQuery SQL analyst.
